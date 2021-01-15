@@ -6,18 +6,19 @@ import cv2
 from PIL import Image
 from torch.utils import data
 from utils.ext_transforms import get_affine_transform
+# from ext_transforms import get_affine_transform
 
 
 class PascalPartSegmentation(data.Dataset):
     def __init__(self, root, split, crop_size=[473, 473], scale_factor=0.25,
-                 rotation_factor=30, ignore_label=255, transform=None):
+                 rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=None):
         self.root = root
         self.aspect_ratio = crop_size[1] * 1.0 / crop_size[0]
         self.crop_size = np.asarray(crop_size)
         self.ignore_label = ignore_label
         self.scale_factor = scale_factor
         self.rotation_factor = rotation_factor
-        self.flip_prob = 0.5
+        self.flip_prob = flip_prob
         self.transform = transform
         self.dataset = split
 
@@ -51,7 +52,7 @@ class PascalPartSegmentation(data.Dataset):
         im_path = os.path.join(self.root, 'images', train_item + '.jpg')
         parsing_anno_path = os.path.join(self.root, 'labels', train_item + '.png')
 
-        im = cv2.imread(im_path, cv2.IMREAD_COLOR)
+        im = cv2.imread(im_path, cv2.IMREAD_COLOR)[...,::-1]
         h, w, _ = im.shape
         parsing_anno = np.zeros((h, w), dtype=np.long)
 
@@ -188,3 +189,31 @@ class VOCPartDataValSegmentation(data.Dataset):
         }
 
         return batch_input_im, meta
+
+
+if __name__ == '__main__':
+    from tqdm import tqdm
+
+    num_classes = 7
+    train_dst = PascalPartSegmentation(root='./data/pascalpart', split='train', crop_size=[512, 512], scale_factor=0,
+                                       rotation_factor=0, ignore_label=255, flip_prob=0, transform=None)
+    train_loader = data.DataLoader(
+        train_dst, batch_size=32, shuffle=False, num_workers=2)
+    weights = np.zeros(num_classes)
+    for (images, labels) in tqdm(train_loader):
+        labels = labels.numpy()
+        pixel_nums = []
+        tot_pixels = 0
+        for i in range(num_classes):
+            pixel_num_of_cls_i = np.sum(labels == i).astype(np.float)
+            pixel_nums.append(pixel_num_of_cls_i)
+            tot_pixels += pixel_num_of_cls_i
+        weight = []
+        for i in range(num_classes):
+            weight.append(
+                (tot_pixels - pixel_nums[i]) / tot_pixels / (num_classes - 1)
+            )
+        weight = np.array(weight, dtype=np.float)
+        weights += weight
+        # weights = torch.from_numpy(weights).float().to(masks.device)
+    print(weights/len(train_loader))

@@ -66,7 +66,8 @@ def get_argparser():
 
     parser.add_argument("--loss_type", type=str, default='CE+FL',
                         choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
-    parser.add_argument("--loss_weights", type=list, default=None,
+    parser.add_argument("--loss_weights", type=list,
+                        default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
                         help="loss weights for classes (default: None)")
     parser.add_argument("--gpu_ids", type=str, default='0',
                         help="GPU IDs")
@@ -99,10 +100,10 @@ def get_dataset(opts):
                                  std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = PascalPartSegmentation(root=opts.data_root,
-                                           split='train', transform=transform)
-        val_dst = PascalPartSegmentation(root=opts.data_root,
-                                         split='val', transform=transform)
+        train_dst = PascalPartSegmentation(root=opts.data_root, split='train', crop_size=[512, 512], scale_factor=0.25,
+                                           rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=transform)
+        val_dst = PascalPartSegmentation(root=opts.data_root, split='val', crop_size=[512, 512], scale_factor=0,
+                                         rotation_factor=0, ignore_label=255, flip_prob=0, transform=transform)
 
     else:
         raise Exception("Wrong dataset given. supported choices: pascalpart")
