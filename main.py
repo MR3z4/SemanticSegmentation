@@ -325,7 +325,7 @@ def main():
 
             if cur_itrs >= opts.total_itrs:
                 return
-        criterion.end_log(train_loader)
+        criterion.end_log(len(train_loader))
 
 
 if __name__ == '__main__':
