@@ -1,3 +1,4 @@
+from torchvision.transforms import transforms
 from tqdm import tqdm
 import network
 import utils
@@ -7,7 +8,7 @@ import argparse
 import numpy as np
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes
+from datasets import PascalPartSegmentation
 from utils import ext_transforms as et
 from metrics import StreamSegMetrics
 from utils.loss import Loss
@@ -24,11 +25,11 @@ def get_argparser():
     parser = argparse.ArgumentParser()
 
     # Datset Options
-    parser.add_argument("--data_root", type=str, default='./datasets/data',
+    parser.add_argument("--data_root", type=str, default='./datasets/data/pascalpart',
                         help="path to Dataset")
-    parser.add_argument("--dataset", type=str, default='voc',
-                        choices=['voc', 'cityscapes'], help='Name of dataset')
-    parser.add_argument("--num_classes", type=int, default=None,
+    parser.add_argument("--dataset", type=str, default='pascalpart',
+                        choices=['pascalpart'], help='Name of dataset')
+    parser.add_argument("--num_classes", type=int, default=7,
                         help="num classes (default: None)")
 
     # Deeplab Options
@@ -53,7 +54,7 @@ def get_argparser():
     parser.add_argument("--step_size", type=int, default=10000)
     parser.add_argument("--crop_val", action='store_true', default=False,
                         help='crop validation (default: False)')
-    parser.add_argument("--batch_size", type=int, default=16,
+    parser.add_argument("--batch_size", type=int, default=2,
                         help='batch size (default: 16)')
     parser.add_argument("--val_batch_size", type=int, default=4,
                         help='batch size for validation (default: 4)')
@@ -63,7 +64,7 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='CE + 5 * FL',
+    parser.add_argument("--loss_type", type=str, default='CE+FL',
                         choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list, default=None,
                         help="loss weights for classes (default: None)")
@@ -90,57 +91,22 @@ def get_argparser():
 def get_dataset(opts):
     """ Dataset And Augmentation
     """
-    if opts.dataset == 'voc':
-        train_transform = et.ExtCompose([
-            # et.ExtResize(size=opts.crop_size),
-            et.ExtRandomScale((0.5, 2.0)),
-            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size), pad_if_needed=True),
-            et.ExtRandomHorizontalFlip(),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-        if opts.crop_val:
-            val_transform = et.ExtCompose([
-                et.ExtResize(opts.crop_size),
-                et.ExtCenterCrop(opts.crop_size),
-                et.ExtToTensor(),
-                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225]),
-            ])
-        else:
-            val_transform = et.ExtCompose([
-                et.ExtToTensor(),
-                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225]),
-            ])
-        train_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-                                    image_set='train', download=opts.download, transform=train_transform)
-        val_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-                                  image_set='val', download=False, transform=val_transform)
 
-    if opts.dataset == 'cityscapes':
-        train_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
-            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size)),
-            et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-            et.ExtRandomHorizontalFlip(),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
+    if opts.dataset == 'pascalpart':
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225]),
         ])
 
-        val_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
+        train_dst = PascalPartSegmentation(root=opts.data_root,
+                                           split='train', transform=transform)
+        val_dst = PascalPartSegmentation(root=opts.data_root,
+                                         split='val', transform=transform)
 
-        train_dst = Cityscapes(root=opts.data_root,
-                               split='train', transform=train_transform)
-        val_dst = Cityscapes(root=opts.data_root,
-                             split='val', transform=val_transform)
+    else:
+        raise Exception("Wrong dataset given. supported choices: pascalpart")
+
     return train_dst, val_dst
 
 
@@ -220,13 +186,13 @@ def main():
     Disabled Dataset for test
     
     """
-    # train_dst, val_dst = get_dataset(opts)
-    # train_loader = data.DataLoader(
-    #     train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=2)
-    # val_loader = data.DataLoader(
-    #     val_dst, batch_size=opts.val_batch_size, shuffle=False, num_workers=2)
-    # print("Dataset: %s, Train set: %d, Val set: %d" %
-    #       (opts.dataset, len(train_dst), len(val_dst)))
+    train_dst, val_dst = get_dataset(opts)
+    train_loader = data.DataLoader(
+        train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=2)
+    val_loader = data.DataLoader(
+        val_dst, batch_size=opts.val_batch_size, shuffle=False, num_workers=2)
+    print("Dataset: %s, Train set: %d, Val set: %d" %
+          (opts.dataset, len(train_dst), len(val_dst)))
 
     # Set up model
     model_map = {
@@ -238,7 +204,8 @@ def main():
         'deeplabv3plus_mobilenet': network.deeplabv3plus_mobilenet
     }
 
-    model = model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride, pretrained_backbone=False)
+    model = model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
+                                  pretrained_backbone=False)
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
@@ -312,6 +279,7 @@ def main():
     interval_loss = 0
     while True:  # cur_itrs < opts.total_itrs:
         # =====  Train  =====
+        criterion.start_log()
         model.train()
         cur_epochs += 1
         for (images, labels) in train_loader:
@@ -336,7 +304,6 @@ def main():
                 print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss}")
                 interval_loss = 0.0
 
-
             if (cur_itrs) % opts.save_interval == 0 and (cur_itrs) % opts.val_interval != 0:
                 save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
                           (opts.model, opts.dataset, opts.output_stride))
@@ -347,7 +314,7 @@ def main():
                 print("validation...")
                 model.eval()
                 val_score = validate(opts=opts, model=model, loader=val_loader, device=device,
-                                                  metrics=metrics)
+                                     metrics=metrics)
                 print(metrics.to_str(val_score))
                 if val_score['Mean IoU'] > best_score:  # save best model
                     best_score = val_score['Mean IoU']
@@ -358,6 +325,7 @@ def main():
 
             if cur_itrs >= opts.total_itrs:
                 return
+        criterion.end_log(train_loader)
 
 
 if __name__ == '__main__':

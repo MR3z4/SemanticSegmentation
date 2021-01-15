@@ -4,3 +4,4 @@ checkpoints
 __pycache__
 results
 *.pth
+data
