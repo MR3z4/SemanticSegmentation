@@ -1,12 +1,10 @@
-import utility
-from model import common
-from loss import discriminator
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
+import utility
+from utils.loss import discriminator
+
 
 class Adversarial(nn.Module):
     def __init__(self, args, gan_type):
@@ -36,7 +34,7 @@ class Adversarial(nn.Module):
                 label_real = torch.ones_like(d_real)
                 loss_d \
                     = F.binary_cross_entropy_with_logits(d_fake, label_fake) \
-                    + F.binary_cross_entropy_with_logits(d_real, label_real)
+                      + F.binary_cross_entropy_with_logits(d_real, label_real)
             elif self.gan_type.find('WGAN') >= 0:
                 loss_d = (d_fake - d_real).mean()
                 if self.gan_type.find('GP') >= 0:
@@ -74,13 +72,13 @@ class Adversarial(nn.Module):
 
         # Generator loss
         return loss_g
-    
+
     def state_dict(self, *args, **kwargs):
         state_discriminator = self.discriminator.state_dict(*args, **kwargs)
         state_optimizer = self.optimizer.state_dict()
 
         return dict(**state_discriminator, **state_optimizer)
-               
+
 # Some references
 # https://github.com/kuc2477/pytorch-wgan-gp/blob/master/model.py
 # OR

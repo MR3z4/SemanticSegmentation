@@ -1,10 +1,10 @@
+import numbers
+import random
+
 import cv2
-import torchvision
+import numpy as np
 import torch
 import torchvision.transforms.functional as F
-import random
-import numbers
-import numpy as np
 from PIL import Image
 
 

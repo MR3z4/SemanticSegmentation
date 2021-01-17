@@ -1,10 +1,12 @@
 import os
-import numpy as np
 import random
-import torch
+
 import cv2
+import numpy as np
+import torch
 from PIL import Image
 from torch.utils import data
+
 from utils.ext_transforms import get_affine_transform
 # from ext_transforms import get_affine_transform
 
@@ -52,7 +54,7 @@ class PascalPartSegmentation(data.Dataset):
         im_path = os.path.join(self.root, 'images', train_item + '.jpg')
         parsing_anno_path = os.path.join(self.root, 'labels', train_item + '.png')
 
-        im = cv2.imread(im_path, cv2.IMREAD_COLOR)[...,::-1]
+        im = cv2.imread(im_path, cv2.IMREAD_COLOR)[..., ::-1]
         h, w, _ = im.shape
         parsing_anno = np.zeros((h, w), dtype=np.long)
 
@@ -216,4 +218,4 @@ if __name__ == '__main__':
         weight = np.array(weight, dtype=np.float)
         weights += weight
         # weights = torch.from_numpy(weights).float().to(masks.device)
-    print(weights/len(train_loader))
+    print(weights / len(train_loader))

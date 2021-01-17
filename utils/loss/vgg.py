@@ -1,10 +1,9 @@
-from model import common
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from torch.autograd import Variable
+from model import common
+
 
 class VGG(nn.Module):
     def __init__(self, conv_index, rgb_range=1):
@@ -26,7 +25,7 @@ class VGG(nn.Module):
             x = self.sub_mean(x)
             x = self.vgg(x)
             return x
-            
+
         vgg_sr = _forward(sr)
         with torch.no_grad():
             vgg_hr = _forward(hr.detach())

@@ -1,6 +1,6 @@
+import torch.nn as nn
 from model import common
 
-import torch.nn as nn
 
 class Discriminator(nn.Module):
     def __init__(self, args, gan_type='GAN'):
@@ -9,7 +9,7 @@ class Discriminator(nn.Module):
         in_channels = 3
         out_channels = 64
         depth = 7
-        #bn = not gan_type == 'WGAN_GP'
+        # bn = not gan_type == 'WGAN_GP'
         bn = True
         act = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
@@ -29,9 +29,9 @@ class Discriminator(nn.Module):
 
         self.features = nn.Sequential(*m_features)
 
-        patch_size = args.patch_size // (2**((depth + 1) // 2))
+        patch_size = args.patch_size // (2 ** ((depth + 1) // 2))
         m_classifier = [
-            nn.Linear(out_channels * patch_size**2, 1024),
+            nn.Linear(out_channels * patch_size ** 2, 1024),
             act,
             nn.Linear(1024, 1)
         ]
@@ -42,4 +42,3 @@ class Discriminator(nn.Module):
         output = self.classifier(features.view(features.size(0), -1))
 
         return output
-

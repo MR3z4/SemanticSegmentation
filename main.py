@@ -1,22 +1,20 @@
-from tqdm import tqdm
-import network
-import utils
 import os
 import random
-import numpy as np
 
-from torch.utils import data
-from metrics import StreamSegMetrics
-from utils.loss import Loss
-from utils.configs import get_argparser, get_dataset
-from utils.mixup import mixup_data, mixup_criterion
-import torch
-import torch.nn as nn
-
-from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+from PIL import Image
+from torch.utils import data
+from tqdm import tqdm
 
+import network
+import utils
+from metrics import StreamSegMetrics
+from utils.configs import get_argparser, get_dataset
+from utils.loss import Loss
 from utils.train_options import get_input, calc_loss
 
 

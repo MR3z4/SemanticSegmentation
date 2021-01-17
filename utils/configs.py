@@ -1,6 +1,9 @@
-from torchvision.transforms import transforms
 import argparse
+
+from torchvision.transforms import transforms
+
 from datasets import PascalPartSegmentation
+
 
 def get_argparser():
     parser = argparse.ArgumentParser()
