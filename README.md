@@ -64,7 +64,6 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 This project started as my master thesis. I will keep improving it as long as i can.
 
 
