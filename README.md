@@ -114,6 +114,7 @@ It will be completed over time.
 - [ ] Add MixMatch option for training
 - [ ] Add FixMatch option for training
 - [ ] Distibuted support
+
 See the [open issues](https://github.com/MR3z4/SemanticSegmentation/issues) for a list of proposed features (and known issues).
 
 
