@@ -21,7 +21,8 @@ def create_optimizer(args, model_params):
                      weight_decay=args.weight_decay, eps=args.opt_eps)
     elif args.optimizer == 'adabelief':
         return AdaBelief(model_params, args.lr, betas=(args.opt_beta1, args.opt_beta2),
-                         weight_decay=args.weight_decay, eps=args.opt_eps)
+                         weight_decay=args.weight_decay, eps=args.opt_eps, amsgrad=False, weight_decouple=True,
+                         fixed_decay=False, rectify=True, degenerated_to_sgd=True)
     elif args.optimizer == 'yogi':
         return Yogi(model_params, args.lr, betas=(args.opt_beta1, args.opt_beta2),
                     weight_decay=args.weight_decay)
