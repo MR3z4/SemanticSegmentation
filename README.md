@@ -112,7 +112,7 @@ It will be completed over time.
 - [x] Add RMI loss
 - [x] Add Mixup option for training
 - [x] Add Mixup Without Hesitation for training with mixup
-- [ ] Add AdaBelief optimizer option for training
+- [x] Add AdaBelief optimizer option for training
 - [ ] Add MixMatch option for training
 - [ ] Add FixMatch option for training
 - [ ] Distibuted support
