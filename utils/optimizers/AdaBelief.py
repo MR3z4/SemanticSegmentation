@@ -1,7 +1,6 @@
 import math
 import torch
 from torch.optim.optimizer import Optimizer
-from colorama import Fore, Back, Style
 
 version_higher = (torch.__version__ >= "1.5.0")
 
