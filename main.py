@@ -15,6 +15,7 @@ import utils
 from metrics import StreamSegMetrics
 from utils.configs import get_argparser, get_dataset
 from utils.loss import Loss
+from utils.optimizers import create_optimizer
 from utils.train_options import get_input, calc_loss
 
 
@@ -102,10 +103,13 @@ def main():
     metrics = StreamSegMetrics(opts.num_classes)
 
     # Set up optimizer
-    optimizer = torch.optim.SGD(params=[
-        {'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
-        {'params': model.classifier.parameters(), 'lr': opts.lr},
-    ], lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
+    model_params = [{'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+                    {'params': model.classifier.parameters(), 'lr': opts.lr}, ]
+    # optimizer = create_optimizer(opts, model_params=model_params)
+    # optimizer = torch.optim.SGD(params=[
+    #     {'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+    #     {'params': model.classifier.parameters(), 'lr': opts.lr},
+    # ], lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
     # optimizer = torch.optim.SGD(params=model.parameters(), lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
     # torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.lr_decay_step, gamma=opts.lr_decay_factor)
     if opts.lr_policy == 'poly':

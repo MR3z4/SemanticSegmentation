@@ -31,10 +31,6 @@ def get_argparser():
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
                         help="epoch number (default: 30k)")
-    parser.add_argument("--lr", type=float, default=0.01,
-                        help="learning rate (default: 0.01)")
-    parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
-                        help="learning rate scheduler policy")
     parser.add_argument("--step_size", type=int, default=10000)
     parser.add_argument("--crop_val", action='store_true', default=False,
                         help='crop validation (default: False)')
@@ -55,8 +51,6 @@ def get_argparser():
                         help="loss weights for classes (default: None)")
     parser.add_argument("--gpu_ids", type=str, default='0',
                         help="GPU IDs")
-    parser.add_argument("--weight_decay", type=float, default=1e-4,
-                        help='weight decay (default: 1e-4)')
     parser.add_argument("--random_seed", type=int, default=149,
                         help="random seed (default: 149)")
     parser.add_argument("--print_interval", type=int, default=10,
@@ -66,12 +60,28 @@ def get_argparser():
     parser.add_argument("--val_interval", type=int, default=100,
                         help="epoch interval for eval (default: 100)")
 
+    # Optimizer Options
+    parser.add_argument('--optimizer', default='adabelief', type=str, help='Optimizer',
+                        choices=['sgd', 'adam', 'adamw', 'adabelief', 'yogi', 'msvag', 'radam', 'fromage',])
+    parser.add_argument("--lr", type=float, default=0.01,
+                        help="learning rate (default: 0.01)")
+    parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
+                        help="learning rate scheduler policy")
+    parser.add_argument('--opt_eps', default=1e-8, type=float, help='eps for var adam')
+    parser.add_argument('--opt_momentum', default=0.9, type=float, help='momentum term')
+    parser.add_argument('--opt_beta1', default=0.9, type=float, help='Adam coefficients beta_1')
+    parser.add_argument('--opt_beta2', default=0.999, type=float, help='Adam coefficients beta_2')
+    parser.add_argument('--weight_decay', type=float, default=5e-4,
+                        help='weight decay for optimizers (default: 1e-4)')
+    # parser.add_argument('--reset', action = 'store_true',
+    #                     help='whether reset optimizer at learning rate decay')
+
     # Extra Train Options
-    parser.add_argument("--use_mixup", action='store_true', default=True,
+    parser.add_argument("--use_mixup", action='store_true', default=False,
                         help='to either use mixup or not')
     parser.add_argument("--mixup_alpha", type=float, default=0.2,
                         help='the alpha parameter used in mixup (default: 0.2)')
-    parser.add_argument("--use_mixup_mwh", action='store_true', default=True,
+    parser.add_argument("--use_mixup_mwh", action='store_true', default=False,
                         help='if using mixup, you can choose to train with Mixup Without Hesitation method')
     parser.add_argument("--mwh_stages", type=list, default=[0.6, 0.9],
                         help='the percent of the max iteration to be set for each stage in mwh. (it has 3 stages)')
