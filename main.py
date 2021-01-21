@@ -105,7 +105,7 @@ def main():
     # Set up optimizer
     model_params = [{'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
                     {'params': model.classifier.parameters(), 'lr': opts.lr}, ]
-    # optimizer = create_optimizer(opts, model_params=model_params)
+    optimizer = create_optimizer(opts, model_params=model_params)
     # optimizer = torch.optim.SGD(params=[
     #     {'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
     #     {'params': model.classifier.parameters(), 'lr': opts.lr},
