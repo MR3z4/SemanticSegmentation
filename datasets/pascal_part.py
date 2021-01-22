@@ -1,6 +1,6 @@
 import os
 import random
-
+import glob
 import cv2
 import numpy as np
 import torch
@@ -121,25 +121,22 @@ class PascalPartSegmentation(data.Dataset):
             return input, label_parsing
 
 
-class VOCPartDataValSegmentation(data.Dataset):
-    def __init__(self, root, dataset='val', crop_size=[473, 473], transform=None, flip=False):
-        self.root = root
-        self.crop_size = crop_size
-        self.transform = transform
-        self.flip = flip
-        self.dataset = dataset
+class PascalPartValSegmentation(data.Dataset):
+    def __init__(self, root, crop_size=[473, 473], ignore_label=255, transform=None, ext='.jpg'):
         self.root = root
         self.aspect_ratio = crop_size[1] * 1.0 / crop_size[0]
         self.crop_size = np.asarray(crop_size)
+        self.ignore_label = ignore_label
+        self.transform = transform
 
-        list_path = os.path.join(self.root, self.dataset + '_id.txt')
-        val_list = [i_id.strip() for i_id in open(list_path)]
+        list_path = os.path.join(self.root + f'*{ext}')
+        train_list = glob.glob(list_path)
 
-        self.val_list = val_list
-        self.number_samples = len(self.val_list)
+        self.train_list = train_list
+        self.number_samples = len(self.train_list)
 
     def __len__(self):
-        return len(self.val_list)
+        return self.number_samples
 
     def _box2cs(self, box):
         x, y, w, h = box[:4]
@@ -154,18 +151,22 @@ class VOCPartDataValSegmentation(data.Dataset):
         elif w < self.aspect_ratio * h:
             w = h * self.aspect_ratio
         scale = np.array([w * 1.0, h * 1.0], dtype=np.float32)
-
         return center, scale
 
     def __getitem__(self, index):
-        val_item = self.val_list[index]
-        # Load training image
-        im_path = os.path.join(self.root, self.dataset + '_images', val_item + '.jpg')
-        im = cv2.imread(im_path, cv2.IMREAD_COLOR)
+        train_item = self.train_list[index]
+
+        im_path = os.path.join(self.root, 'images', train_item + '.jpg')
+        parsing_anno_path = os.path.join(self.root, 'labels', train_item + '.png')
+
+        im = cv2.imread(im_path, cv2.IMREAD_COLOR)[..., ::-1]
         h, w, _ = im.shape
+        parsing_anno = np.zeros((h, w), dtype=np.long)
+
         # Get person center and scale
         person_center, s = self._box2cs([0, 0, w - 1, h - 1])
         r = 0
+
         trans = get_affine_transform(person_center, s, r, self.crop_size)
         input = cv2.warpAffine(
             im,
@@ -174,15 +175,12 @@ class VOCPartDataValSegmentation(data.Dataset):
             flags=cv2.INTER_LINEAR,
             borderMode=cv2.BORDER_CONSTANT,
             borderValue=(0, 0, 0))
-        input = self.transform(input)
-        flip_input = input.flip(dims=[-1])
-        if self.flip:
-            batch_input_im = torch.stack([input, flip_input])
-        else:
-            batch_input_im = input
+
+        if self.transform:
+            input = self.transform(input)
 
         meta = {
-            'name': val_item,
+            'name': train_item,
             'center': person_center,
             'height': h,
             'width': w,
@@ -190,7 +188,17 @@ class VOCPartDataValSegmentation(data.Dataset):
             'rotation': r
         }
 
-        return batch_input_im, meta
+        label_parsing = cv2.warpAffine(
+            parsing_anno,
+            trans,
+            (int(self.crop_size[1]), int(self.crop_size[0])),
+            flags=cv2.INTER_NEAREST,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(255))
+
+        label_parsing = torch.from_numpy(label_parsing)
+
+        return input, label_parsing
 
 
 if __name__ == '__main__':

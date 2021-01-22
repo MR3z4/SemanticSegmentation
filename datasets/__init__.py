@@ -1,1 +1,1 @@
-from .pascal_part import PascalPartSegmentation
+from .pascal_part import PascalPartSegmentation, PascalPartValSegmentation
