@@ -129,7 +129,7 @@ class PascalPartValSegmentation(data.Dataset):
         self.ignore_label = ignore_label
         self.transform = transform
 
-        list_path = os.path.join(self.root + f'*{ext}')
+        list_path = os.path.join(self.root, f'*{ext}')
         train_list = glob.glob(list_path)
 
         self.train_list = train_list
@@ -156,8 +156,8 @@ class PascalPartValSegmentation(data.Dataset):
     def __getitem__(self, index):
         train_item = self.train_list[index]
 
-        im_path = os.path.join(self.root, 'images', train_item + '.jpg')
-        parsing_anno_path = os.path.join(self.root, 'labels', train_item + '.png')
+        im_path = os.path.join(train_item)
+        # parsing_anno_path = os.path.join(self.root, 'labels', train_item + '.png')
 
         im = cv2.imread(im_path, cv2.IMREAD_COLOR)[..., ::-1]
         h, w, _ = im.shape
@@ -187,18 +187,18 @@ class PascalPartValSegmentation(data.Dataset):
             'scale': s,
             'rotation': r
         }
+        #
+        # label_parsing = cv2.warpAffine(
+        #     parsing_anno,
+        #     trans,
+        #     (int(self.crop_size[1]), int(self.crop_size[0])),
+        #     flags=cv2.INTER_NEAREST,
+        #     borderMode=cv2.BORDER_CONSTANT,
+        #     borderValue=(255))
 
-        label_parsing = cv2.warpAffine(
-            parsing_anno,
-            trans,
-            (int(self.crop_size[1]), int(self.crop_size[0])),
-            flags=cv2.INTER_NEAREST,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=(255))
+        # label_parsing = torch.from_numpy(label_parsing)
 
-        label_parsing = torch.from_numpy(label_parsing)
-
-        return input, label_parsing
+        return input, meta
 
 
 if __name__ == '__main__':

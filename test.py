@@ -2,9 +2,10 @@ from torch.utils import data
 from tqdm import tqdm
 import network
 from datasets import PascalPartValSegmentation
-from utils import ext_transforms as et
+from utils import ext_transforms as et, utils
 from torchvision.transforms import transforms
 import torch
+import numpy as np
 
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -28,7 +29,7 @@ model_map = {
 
 model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False)
 chk = torch.load(checkpoint_path)
-model.load_state_dict(chk['model_state'])
+# model.load_state_dict(chk['model_state'])
 model.to(device)
 model.eval()
 val_transform = transforms.Compose([
@@ -36,19 +37,20 @@ val_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225]),
 ])
+denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
+                           std=[0.229, 0.224, 0.225])
 
 val_dst = PascalPartValSegmentation(root="samples", ext='.jpg', crop_size=[512, 512], ignore_label=255, transform=val_transform)
 val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False, num_workers=0)
-# img = Image.open(img_path)
-# lbl = Image.open(lbl_path)
-# image, label = val_transform(img)
-for (image, label) in tqdm(val_loader):
+
+for (image, meta) in tqdm(val_loader):
     with torch.no_grad():
-        images = image.unsqueeze(0).to(device, dtype=torch.float32)
-        labels = label.unsqueeze(0).to(device, dtype=torch.long)
+        images = image.to(device, dtype=torch.float32)
+        metas = meta
 
         outputs = model(images)
-        preds = outputs.detach().max(dim=1)[1].cpu().numpy()
-        targets = labels.cpu().numpy()
-        plt.imshow(preds[0])
+        preds = outputs.detach().max(dim=1)[1].cpu().numpy()[0]
+        img = (denorm(images[0].detach().cpu().numpy()) * 255).transpose(1, 2, 0).astype(np.uint8)
+        # targets = labels.cpu().numpy()
+        plt.imshow(preds)
         plt.show()
