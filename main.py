@@ -72,7 +72,9 @@ def validate(opts, model, loader, device, metrics):
 
 def main():
     opts = get_argparser().parse_args()
-
+    if 'ACE2P' in opts.model:
+        opts.loss_type = 'SCP'
+        opts.use_mixup = False
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_ids
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     opts.device = device
