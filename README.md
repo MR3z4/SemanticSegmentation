@@ -113,6 +113,9 @@ It will be completed over time.
 - [x] Add Mixup option for training
 - [x] Add Mixup Without Hesitation for training with mixup
 - [x] Add AdaBelief optimizer option for training
+- [x] Add CE2P Network(with normal BatchNorm) for training.
+- [ ] Add InPlace Active BatchNorm for CE2P.
+- [ ] Add SCHP completely.
 - [ ] Add MixMatch option for training
 - [ ] Add FixMatch option for training
 - [ ] Distibuted support
