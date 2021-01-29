@@ -17,9 +17,9 @@ def get_argparser():
                         help="num classes (default: None)")
 
     # Deeplab Options
-    parser.add_argument("--model", type=str, default='deeplabv3plus_resnet101',
-                        choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50',
-                                 'deeplabv3_resnet101', 'deeplabv3plus_resnet101',
+    parser.add_argument("--model", type=str, default='ACE2P_resnet101',
+                        choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
+                                 'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
                                  'deeplabv3_mobilenet', 'deeplabv3plus_mobilenet'], help='model name')
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")
@@ -44,8 +44,8 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='CE+FL',
-                        choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
+    parser.add_argument("--loss_type", type=str, default='SCP',
+                        choices=['MSE', 'CE', 'FL', 'F1', 'SCP'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list,
                         default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
                         help="loss weights for classes (default: None)")
@@ -62,7 +62,7 @@ def get_argparser():
 
     # Optimizer Options
     parser.add_argument('--optimizer', default='adabelief', type=str, help='Optimizer',
-                        choices=['sgd', 'adam', 'adamw', 'adabelief', 'yogi', 'msvag', 'radam', 'fromage',])
+                        choices=['sgd', 'adam', 'adamw', 'adabelief', 'yogi', 'msvag', 'radam', 'fromage', ])
     parser.add_argument("--lr", type=float, default=0.01,
                         help="learning rate (default: 0.01)")
     parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
@@ -109,5 +109,3 @@ def get_dataset(opts):
         raise Exception("Wrong dataset given. supported choices: pascalpart")
 
     return train_dst, val_dst
-
-

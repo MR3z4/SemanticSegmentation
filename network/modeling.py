@@ -1,3 +1,4 @@
+from .ace2p import ACE2P, AugmentedCE2PHead
 from .utils import IntermediateLayerGetter
 from ._deeplab import DeepLabHead, DeepLabHeadV3Plus, DeepLabV3
 from .backbone import resnet
@@ -25,9 +26,16 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
     elif name=='deeplabv3':
         return_layers = {'layer4': 'out'}
         classifier = DeepLabHead(inplanes , num_classes, aspp_dilate)
+    elif name=='ACE2P':
+        return_layers = {'layer4': 'out', 'layer3': 'high_level', 'layer2': 'mid_level', 'layer1': 'low_level'}
+        classifier = AugmentedCE2PHead(inplanes, low_level_planes, num_classes, aspp_dilate)
+
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
-    model = DeepLabV3(backbone, classifier)
+    if 'deeplabv3' in name:
+        model = DeepLabV3(backbone, classifier)
+    elif name=='ACE2P':
+        model = ACE2P(backbone, classifier)
     return model
 
 def _segm_mobilenet(name, backbone_name, num_classes, output_stride, pretrained_backbone):
@@ -105,7 +113,7 @@ def deeplabv3_mobilenet(num_classes=21, output_stride=8, pretrained_backbone=Tru
 # Deeplab v3+
 
 def deeplabv3plus_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True):
-    """Constructs a DeepLabV3 model with a ResNet-50 backbone.
+    """Constructs a DeepLabV3+ model with a ResNet-50 backbone.
 
     Args:
         num_classes (int): number of classes.
@@ -124,6 +132,29 @@ def deeplabv3plus_resnet101(num_classes=21, output_stride=8, pretrained_backbone
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
     return _load_model('deeplabv3plus', 'resnet101', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
+
+# ACE2P
+
+def ACE2P_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True):
+    """Constructs a ACE2P model with a ResNet-50 backbone.
+
+    Args:
+        num_classes (int): number of classes.
+        output_stride (int): output stride for deeplab.
+        pretrained_backbone (bool): If True, use the pretrained backbone.
+    """
+    return _load_model('ACE2P', 'resnet50', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
+
+
+def ACE2P_resnet101(num_classes=21, output_stride=8, pretrained_backbone=True):
+    """Constructs a ACE2P model with a ResNet-101 backbone.
+
+    Args:
+        num_classes (int): number of classes.
+        output_stride (int): output stride for deeplab.
+        pretrained_backbone (bool): If True, use the pretrained backbone.
+    """
+    return _load_model('ACE2P', 'resnet101', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
 
 
 def deeplabv3plus_mobilenet(num_classes=21, output_stride=8, pretrained_backbone=True):
