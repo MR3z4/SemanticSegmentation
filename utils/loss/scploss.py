@@ -84,7 +84,7 @@ class SCPLoss(nn.Module):
             #                            mode='bilinear', align_corners=True)
             # scale_edge = F.interpolate(input=preds_edge[0], size=(h, w),
             #                            mode='bilinear', align_corners=True)
-            loss += self.lamda_3 * self.reg(pred_parsing, preds_edge, target[0])
+            loss += self.lamda_3 * self.reg(pred_parsing, preds_edge[0], target[0])
 
         return loss
 

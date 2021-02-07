@@ -40,10 +40,10 @@ def get_input(images, labels, opts, device, cur_iter):
             images, labels_a, labels_b, lam = mixup_data(images, labels, opts.mixup_alpha, device)
             images, labels_a, labels_b = map(Variable, (images, labels_a, labels_b))
 
-        return images, (labels_a, labels_b, lam)
+        return images, [labels_a, labels_b, lam]
     else:
         if 'ACE2P' in opts.model:
-            return images, (labels, edges)
+            return images, [labels, edges]
         else:
             return images, labels
 

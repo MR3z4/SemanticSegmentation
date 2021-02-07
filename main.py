@@ -13,6 +13,7 @@ from tqdm import tqdm
 import network
 import utils
 from metrics import StreamSegMetrics
+from utils import schp
 from utils.configs import get_argparser, get_dataset
 from utils.loss import Loss
 from utils.optimizers import create_optimizer
@@ -36,7 +37,10 @@ def validate(opts, model, loader, device, metrics):
             labels = labels.to(device, dtype=torch.long)
 
             outputs = model(images)
-            preds = outputs.detach().max(dim=1)[1].cpu().numpy()
+            if 'ACE2P' in opts.model:
+                preds = outputs[0][0].detach().max(dim=1)[1].cpu().numpy()
+            else:
+                preds = outputs.detach().max(dim=1)[1].cpu().numpy()
             targets = labels.cpu().numpy()
 
             metrics.update(targets, preds)
@@ -97,6 +101,10 @@ def main():
     # Set up model
     model = network.model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
                                           pretrained_backbone=True)
+    if opts.use_schp:
+        schp_model = network.model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
+                                                   pretrained_backbone=True)
+
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
@@ -139,6 +147,7 @@ def main():
     best_score = 0.0
     cur_itrs = 0
     cur_epochs = 0
+    cycle_n = 0
     if opts.ckpt is not None and os.path.isfile(opts.ckpt):
         checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint["model_state"])
@@ -182,6 +191,24 @@ def main():
             optimizer.zero_grad()
             outputs = model(images)
 
+            if opts.use_schp:
+                # Online Self Correction Cycle with Label Refinement
+                if cycle_n >= 1:
+                    with torch.no_grad():
+                        soft_preds = schp_model(images)
+                        soft_parsing = []
+                        soft_edge = []
+                        for soft_pred in soft_preds:
+                            soft_parsing.append(soft_pred[0][-1])
+                            soft_edge.append(soft_pred[1][-1])
+                        soft_preds = torch.cat(soft_parsing, dim=0)
+                        soft_edges = torch.cat(soft_edge, dim=0)
+                else:
+                    soft_preds = None
+                    soft_edges = None
+                labels.append(soft_preds)
+                labels.append(soft_edges)
+
             # loss = criterion(outputs, labels)
             loss = calc_loss(criterion, outputs, labels, opts)
             loss.backward()
@@ -218,6 +245,20 @@ def main():
 
             if cur_itrs >= opts.total_itrs:
                 return
+
+        # Self Correction Cycle with Model Aggregation
+        if opts.use_schp:
+            if (cur_epochs + 1) >= opts.schp_start and (cur_epochs + 1 - opts.schp_start) % opts.cycle_epochs == 0:
+                print(f'Self-correction cycle number {cycle_n}')
+
+                schp.moving_average(schp_model, model, 1.0 / (cycle_n + 1))
+                cycle_n += 1
+                schp.bn_re_estimate(train_loader, schp_model)
+                schp.save_schp_checkpoint({
+                    'state_dict': schp_model.state_dict(),
+                    'cycle_n': cycle_n,
+                }, False, "checkpoints", filename=f'schp_{opts.model}_{opts.dataset}_cycle{cycle_n}_checkpoint.pth')
+
         criterion.end_log(len(train_loader))
 
 

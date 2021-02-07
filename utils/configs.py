@@ -86,6 +86,14 @@ def get_argparser():
     parser.add_argument("--mwh_stages", type=list, default=[0.6, 0.9],
                         help='the percent of the max iteration to be set for each stage in mwh. (it has 3 stages)')
 
+    # SCHP Train Options
+    parser.add_argument("--use_schp", action='store_true', default=True,
+                        help='to either use SCHP or not')
+    parser.add_argument("--schp_start", type=int, default=10,
+                        help='SCHP start epoch')
+    parser.add_argument("--cycle_epochs", type=int, default=2,
+                        help='SCHP cyclical epoch')
+
     return parser
 
 
