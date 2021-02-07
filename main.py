@@ -153,6 +153,9 @@ def main():
         model.load_state_dict(checkpoint["model_state"])
         model = nn.DataParallel(model)
         model.to(device)
+        if opts.use_schp:
+            schp_model = nn.DataParallel(schp_model)
+            schp_model.to(device)
         if opts.continue_training:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
@@ -166,6 +169,9 @@ def main():
         print("[!] Retrain")
         model = nn.DataParallel(model)
         model.to(device)
+        if opts.use_schp:
+            schp_model = nn.DataParallel(schp_model)
+            schp_model.to(device)
 
     # ==========   Train Loop   ==========#
     if opts.test_only:
