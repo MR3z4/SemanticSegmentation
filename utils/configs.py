@@ -93,6 +93,9 @@ def get_argparser():
                         help='SCHP start epoch')
     parser.add_argument("--cycle_epochs", type=int, default=2,
                         help='SCHP cyclical epoch')
+    parser.add_argument("--schp_ckpt", default='checkpoints/latest_ACE2P_resnet101_pascalpart_os16.pth', type=str,
+                        help="restore schl model from checkpoint")
+
 
     return parser
 

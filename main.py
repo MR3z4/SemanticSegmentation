@@ -148,6 +148,12 @@ def main():
     cur_itrs = 0
     cur_epochs = 0
     cycle_n = 0
+
+    if opts.use_schp and opts.schp_ckpt is not None and os.path.isfile(opts.schp_ckpt):
+        checkpoint = torch.load(opts.schp_ckpt, map_location=torch.device('cpu'))
+        schp_model.load_state_dict(checkpoint["model_state"])
+        print("SCHP Model restored from %s" % opts.schp_ckpt)
+
     if opts.ckpt is not None and os.path.isfile(opts.ckpt):
         checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint["model_state"])
@@ -202,13 +208,15 @@ def main():
                 if cycle_n >= 1:
                     with torch.no_grad():
                         soft_preds = schp_model(images)
-                        soft_parsing = []
-                        soft_edge = []
-                        for soft_pred in soft_preds:
-                            soft_parsing.append(soft_pred[0][-1])
-                            soft_edge.append(soft_pred[1][-1])
-                        soft_preds = torch.cat(soft_parsing, dim=0)
-                        soft_edges = torch.cat(soft_edge, dim=0)
+                        soft_edges = soft_preds[1][-1]
+                        soft_preds = soft_preds[0][-1]
+                        # soft_parsing = []
+                        # soft_edge = []
+                        # for soft_pred in soft_preds:
+                        #     soft_parsing.append(soft_pred[0][-1])
+                        #     soft_edge.append(soft_pred[1][-1])
+                        # soft_preds = torch.cat(soft_parsing, dim=0)
+                        # soft_edges = torch.cat(soft_edge, dim=0)
                 else:
                     soft_preds = None
                     soft_edges = None

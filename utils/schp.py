@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn
 
+
 def moving_average(net1, net2, alpha=1):
     for param1, param2 in zip(net1.parameters(), net2.parameters()):
         param1.data *= (1.0 - alpha)
@@ -55,13 +56,13 @@ def bn_re_estimate(loader, model):
     model.apply(lambda module: _set_momenta(module, momenta))
 
 
-def save_schp_checkpoint(states, is_best_parsing, output_dir, filename='schp_checkpoint.pth.tar'):
+def save_schp_checkpoint(states, is_best_parsing, output_dir, filename='schp_checkpoint.pth'):
     save_path = os.path.join(output_dir, filename)
     if os.path.exists(save_path):
         os.remove(save_path)
     torch.save(states, save_path)
     if is_best_parsing and 'state_dict' in states:
-        best_save_path = os.path.join(output_dir, 'model_parsing_best.pth.tar')
+        best_save_path = os.path.join(output_dir, 'best_' + filename)
         if os.path.exists(best_save_path):
             os.remove(best_save_path)
         torch.save(states, best_save_path)
