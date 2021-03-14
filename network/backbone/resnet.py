@@ -119,13 +119,17 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None):
+                 norm_layer=None, ace2p=False):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
+        self.ace2p = ace2p
 
-        self.inplanes = 64
+        if self.ace2p:
+            self.inplanes = 128
+        else:
+            self.inplanes = 64
         self.dilation = 1
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
@@ -136,10 +140,26 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+
+        if self.ace2p:
+            def conv3x3(in_planes, out_planes, stride=1):
+                "3x3 convolution with padding"
+                return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                                 padding=1, bias=False)
+            self.conv1 = conv3x3(3, 64, stride=2)
+            self.bn1 = norm_layer(64)
+            self.relu1 = nn.ReLU(inplace=False)
+            self.conv2 = conv3x3(64, 64)
+            self.bn2 = norm_layer(64)
+            self.relu2 = nn.ReLU(inplace=False)
+            self.conv3 = conv3x3(64, 128)
+            self.bn3 = norm_layer(128)
+            self.relu3 = nn.ReLU(inplace=False)
+        else:
+            self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                   bias=False)
+            self.bn1 = norm_layer(self.inplanes)
+            self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
@@ -193,9 +213,14 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
+        if self.ace2p:
+            x = self.relu1(self.bn1(self.conv1(x)))
+            x = self.relu2(self.bn2(self.conv2(x)))
+            x = self.relu3(self.bn3(self.conv3(x)))
+        else:
+            x = self.conv1(x)
+            x = self.bn1(x)
+            x = self.relu(x)
         x = self.maxpool(x)
 
         x = self.layer1(x)

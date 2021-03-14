@@ -4,7 +4,7 @@ from ._deeplab import DeepLabHead, DeepLabHeadV3Plus, DeepLabV3
 from .backbone import resnet
 from .backbone import mobilenetv2
 
-def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_backbone):
+def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_backbone, ace2p=False):
 
     if output_stride==8:
         replace_stride_with_dilation=[False, True, True]
@@ -15,7 +15,7 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
 
     backbone = resnet.__dict__[backbone_name](
         pretrained=pretrained_backbone,
-        replace_stride_with_dilation=replace_stride_with_dilation)
+        replace_stride_with_dilation=replace_stride_with_dilation, ace2p=ace2p)
     
     inplanes = 2048
     low_level_planes = 256
@@ -66,12 +66,12 @@ def _segm_mobilenet(name, backbone_name, num_classes, output_stride, pretrained_
     model = DeepLabV3(backbone, classifier)
     return model
 
-def _load_model(arch_type, backbone, num_classes, output_stride, pretrained_backbone):
+def _load_model(arch_type, backbone, num_classes, output_stride, pretrained_backbone, ace2p=False):
 
     if backbone=='mobilenetv2':
         model = _segm_mobilenet(arch_type, backbone, num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
     elif backbone.startswith('resnet'):
-        model = _segm_resnet(arch_type, backbone, num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
+        model = _segm_resnet(arch_type, backbone, num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone, ace2p=ace2p)
     else:
         raise NotImplementedError
     return model
@@ -143,7 +143,7 @@ def ACE2P_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True):
         output_stride (int): output stride for deeplab.
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
-    return _load_model('ACE2P', 'resnet50', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
+    return _load_model('ACE2P', 'resnet50', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone, ace2p=True)
 
 
 def ACE2P_resnet101(num_classes=21, output_stride=8, pretrained_backbone=True):
@@ -154,7 +154,7 @@ def ACE2P_resnet101(num_classes=21, output_stride=8, pretrained_backbone=True):
         output_stride (int): output stride for deeplab.
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
-    return _load_model('ACE2P', 'resnet101', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone)
+    return _load_model('ACE2P', 'resnet101', num_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone, ace2p=True)
 
 
 def deeplabv3plus_mobilenet(num_classes=21, output_stride=8, pretrained_backbone=True):
