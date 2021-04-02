@@ -176,6 +176,12 @@ class AugmentedCE2PHead(nn.Module):
             nn.Dropout2d(0.1),
             nn.Conv2d(256, num_classes, kernel_size=1, padding=0, dilation=1, bias=True)
         )
+        if use_abn:
+            import functools
+            from .modules.bn import InPlaceABNSync
+            BatchNorm2d = InPlaceABNSync
+        else:
+            BatchNorm2d=nn.BatchNorm2d
         self._init_weight(BatchNorm2d)
 
     def forward(self, feature):
