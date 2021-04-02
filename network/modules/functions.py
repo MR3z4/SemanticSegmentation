@@ -15,8 +15,7 @@ _backend = load(name="inplace_abn",
                     "inplace_abn_cuda.cu",
                     "inplace_abn_cuda_half.cu"
                 ]],
-                extra_cuda_cflags=["--expt-extended-lambda"]
-                )
+                extra_cuda_cflags=["--expt-extended-lambda"])
 
 # Activation names
 ACT_RELU = "relu"
@@ -155,7 +154,7 @@ class InPlaceABNSync(autograd.Function):
         ctx.affine = weight is not None and bias is not None
 
         # Prepare inputs
-        ctx.world_size = dist.get_world_size() if dist.is_available() else 1
+        ctx.world_size = dist.get_world_size() if dist.is_initialized() else 1
 
         # count = _count_samples(x)
         batch_size = x.new_tensor([x.shape[0]], dtype=torch.long)
