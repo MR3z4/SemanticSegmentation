@@ -28,21 +28,28 @@ class PSPModule(nn.Module):
         Zhao, Hengshuang, et al. *"Pyramid scene parsing network."*
     """
 
-    def __init__(self, features, out_features=512, sizes=(1, 2, 3, 6)):
+    def __init__(self, features, out_features=512, sizes=(1, 2, 3, 6), use_abn=False):
         super(PSPModule, self).__init__()
 
+        if use_abn:
+            import functools
+            from .modules.bn import InPlaceABNSync
+            BatchNorm2d = functools.partial(InPlaceABNSync, activation='none')
+        else:
+            BatchNorm2d=nn.BatchNorm2d
+
         self.stages = []
-        self.stages = nn.ModuleList([self._make_stage(features, out_features, size) for size in sizes])
+        self.stages = nn.ModuleList([self._make_stage(features, out_features, size, BatchNorm2d) for size in sizes])
         self.bottleneck = nn.Sequential(
             nn.Conv2d(features + len(sizes) * out_features, out_features, kernel_size=3, padding=1, dilation=1,
                       bias=False),
-            nn.BatchNorm2d(out_features),
+            BatchNorm2d(out_features),
         )
 
-    def _make_stage(self, features, out_features, size):
+    def _make_stage(self, features, out_features, size, BatchNorm2d):
         prior = nn.AdaptiveAvgPool2d(output_size=(size, size))
         conv = nn.Conv2d(features, out_features, kernel_size=1, bias=False)
-        bn = nn.BatchNorm2d(out_features)
+        bn = BatchNorm2d(out_features)
         return nn.Sequential(prior, conv, bn)
 
     def forward(self, feats):
@@ -57,20 +64,27 @@ class Edge_Module(nn.Module):
     Edge Learning Branch
     """
 
-    def __init__(self, in_fea=[256, 512, 1024], mid_fea=256, out_fea=2):
+    def __init__(self, in_fea=[256, 512, 1024], mid_fea=256, out_fea=2, use_abn=False):
         super(Edge_Module, self).__init__()
+
+        if use_abn:
+            import functools
+            from .modules.bn import InPlaceABNSync
+            BatchNorm2d = functools.partial(InPlaceABNSync, activation='none')
+        else:
+            BatchNorm2d=nn.BatchNorm2d
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_fea[0], mid_fea, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(mid_fea)
+            BatchNorm2d(mid_fea)
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(in_fea[1], mid_fea, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(mid_fea)
+            BatchNorm2d(mid_fea)
         )
         self.conv3 = nn.Sequential(
             nn.Conv2d(in_fea[2], mid_fea, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(mid_fea)
+            BatchNorm2d(mid_fea)
         )
         self.conv4 = nn.Conv2d(mid_fea, out_fea, kernel_size=3, padding=1, dilation=1, bias=True)
         self.conv5 = nn.Conv2d(out_fea * 3, out_fea, kernel_size=1, padding=0, dilation=1, bias=True)
@@ -102,21 +116,29 @@ class Decoder_Module(nn.Module):
     Parsing Branch Decoder Module.
     """
 
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, use_abn=False):
         super(Decoder_Module, self).__init__()
+
+        if use_abn:
+            import functools
+            from .modules.bn import InPlaceABNSync
+            BatchNorm2d = functools.partial(InPlaceABNSync, activation='none')
+        else:
+            BatchNorm2d=nn.BatchNorm2d
+
         self.conv1 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(256)
+            BatchNorm2d(256)
         )
         self.conv2 = nn.Sequential(
             nn.Conv2d(256, 48, kernel_size=1, stride=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(48)
+            BatchNorm2d(48)
         )
         self.conv3 = nn.Sequential(
             nn.Conv2d(304, 256, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(256),
+            BatchNorm2d(256),
             nn.Conv2d(256, 256, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(256)
+            BatchNorm2d(256)
         )
 
         self.conv4 = nn.Conv2d(256, num_classes, kernel_size=1, padding=0, dilation=1, bias=True)
@@ -133,21 +155,28 @@ class Decoder_Module(nn.Module):
 
 
 class AugmentedCE2PHead(nn.Module):
-    def __init__(self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36]):
+    def __init__(self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36], use_abn=False):
         super(AugmentedCE2PHead, self).__init__()
 
-        self.context_encoding = PSPModule(2048, 512)
+        if use_abn:
+            import functools
+            from .modules.bn import InPlaceABNSync
+            BatchNorm2d = functools.partial(InPlaceABNSync, activation='none')
+        else:
+            BatchNorm2d=nn.BatchNorm2d
 
-        self.edge = Edge_Module()
-        self.decoder = Decoder_Module(num_classes)
+        self.context_encoding = PSPModule(2048, 512, use_abn=use_abn)
+
+        self.edge = Edge_Module(use_abn=use_abn)
+        self.decoder = Decoder_Module(num_classes, use_abn=use_abn)
 
         self.fushion = nn.Sequential(
             nn.Conv2d(1024, 256, kernel_size=1, padding=0, dilation=1, bias=False),
-            nn.BatchNorm2d(256),
+            BatchNorm2d(256),
             nn.Dropout2d(0.1),
             nn.Conv2d(256, num_classes, kernel_size=1, padding=0, dilation=1, bias=True)
         )
-        self._init_weight()
+        self._init_weight(BatchNorm2d)
 
     def forward(self, feature):
         x2 = feature['low_level']
@@ -163,10 +192,10 @@ class AugmentedCE2PHead(nn.Module):
         fusion_result = self.fushion(x)
         return [[parsing_result, fusion_result], [edge_result]]
 
-    def _init_weight(self):
+    def _init_weight(self, BatchNorm2d):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            elif isinstance(m, (BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)

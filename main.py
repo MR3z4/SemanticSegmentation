@@ -99,11 +99,12 @@ def main():
           (opts.dataset, len(train_dst), len(val_dst)))
 
     # Set up model
+    pretrained_backbone = False if "ACE2P" in opts.model else True
     model = network.model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
-                                          pretrained_backbone=True)
+                                          pretrained_backbone=pretrained_backbone, use_abn=opts.use_abn)
     if opts.use_schp:
         schp_model = network.model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
-                                                   pretrained_backbone=True)
+                                                   pretrained_backbone=pretrained_backbone, use_abn=opts.use_abn)
 
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)

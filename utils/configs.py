@@ -16,7 +16,7 @@ def get_argparser():
     parser.add_argument("--num_classes", type=int, default=7,
                         help="num classes (default: None)")
 
-    # Deeplab Options
+    # Model Options
     parser.add_argument("--model", type=str, default='ACE2P_resnet101',
                         choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
                                  'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
@@ -24,9 +24,11 @@ def get_argparser():
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")
     parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
+    parser.add_argument("--use_abn", action='store_true', default=False,
+                        help="if true ace2p model will use active batchnorm instead of batchnorm")
 
     # Train Options
-    parser.add_argument("--test_only", action='store_true', default=False)
+    parser.add_argument("--test_only", action='store_true', default=True)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
@@ -93,7 +95,7 @@ def get_argparser():
                         help='SCHP start epoch')
     parser.add_argument("--cycle_epochs", type=int, default=2,
                         help='SCHP cyclical epoch')
-    parser.add_argument("--schp_ckpt", default='checkpoints/latest_ACE2P_resnet101_pascalpart_os16.pth', type=str,
+    parser.add_argument("--schp_ckpt", default=None, type=str,
                         help="restore schl model from checkpoint")
 
 

@@ -27,7 +27,7 @@ checkpoint_path = r"ace2p_initial.pth"
 
 model_map = network.model_map
 
-model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False)
+model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False, use_abn=True)
 chk = torch.load(checkpoint_path)
 model.load_state_dict(chk['model_state'])
 # model.load_state_dict(chk)
@@ -58,30 +58,30 @@ for (image, meta) in tqdm(val_loader):
         img = (denorm(images[0].detach().cpu().numpy()) * 255).transpose(1, 2, 0).astype(np.uint8)
         # targets = labels.cpu().numpy()
 
-        # gt = Image.open(
-        #     r"C:\Users\MohammadReza\Desktop\Thesis\Self-Correction-Human-Parsing-Results\gt\IMG_20201114_124215_987.png")
-        # gt_ = np.array(gt)
-        # gt_[(gt_ == (128, 0, 0)).all(2)] = 1
-        # gt_[(gt_ == (0, 128, 0)).all(2)] = 2
-        # gt_[(gt_ == (128, 128, 0)).all(2)] = 3
-        # gt_[(gt_ == (0, 0, 128)).all(2)] = 4
-        # gt_[(gt_ == (128, 0, 128)).all(2)] = 5
-        # gt_[(gt_ == (0, 128, 128)).all(2)] = 6
-        # h, w, _ = gt_.shape
-        # person_center, s = PascalPartValSegmentation._box2cs(val_dst,[0, 0, w - 1, h - 1])
-        # r = 0
-        #
-        # trans = get_affine_transform(person_center, s, r, val_dst.crop_size)
-        # gt_ = cv2.warpAffine(
-        #     gt_,
-        #     trans,
-        #     (int(val_dst.crop_size[1]), int(val_dst.crop_size[0])),
-        #     flags=cv2.INTER_LINEAR,
-        #     borderMode=cv2.BORDER_CONSTANT,
-        #     borderValue=(0, 0, 0))
-        # from metrics import StreamSegMetrics
-        # met = StreamSegMetrics(7)
-        # met.update(np.expand_dims(gt_[..., 0],0), np.expand_dims(preds, 0))
-        # print(met.get_results())
+        gt = Image.open(
+            r"C:\Users\MohammadReza\Desktop\Thesis\Self-Correction-Human-Parsing-Results\gt\IMG_20201114_124215_987.png")
+        gt_ = np.array(gt)
+        gt_[(gt_ == (128, 0, 0)).all(2)] = 1
+        gt_[(gt_ == (0, 128, 0)).all(2)] = 2
+        gt_[(gt_ == (128, 128, 0)).all(2)] = 3
+        gt_[(gt_ == (0, 0, 128)).all(2)] = 4
+        gt_[(gt_ == (128, 0, 128)).all(2)] = 5
+        gt_[(gt_ == (0, 128, 128)).all(2)] = 6
+        h, w, _ = gt_.shape
+        person_center, s = PascalPartValSegmentation._box2cs(val_dst,[0, 0, w - 1, h - 1])
+        r = 0
+
+        trans = get_affine_transform(person_center, s, r, val_dst.crop_size)
+        gt_ = cv2.warpAffine(
+            gt_,
+            trans,
+            (int(val_dst.crop_size[1]), int(val_dst.crop_size[0])),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0, 0, 0))
+        from metrics import StreamSegMetrics
+        met = StreamSegMetrics(7)
+        met.update(np.expand_dims(gt_[..., 0],0), np.expand_dims(preds, 0))
+        print(met.get_results())
         plt.imshow(preds)
         plt.show()
