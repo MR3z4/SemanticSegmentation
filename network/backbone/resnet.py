@@ -166,8 +166,11 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[0])
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
                                        dilate=replace_stride_with_dilation[1])
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2])
+        if self.ace2p:
+            self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=2, multi_grid=(1, 1, 1), ace2p=True)
+        else:
+            self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
+                                           dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
@@ -188,7 +191,7 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, ace2p=False, dilation=None, multi_grid=None):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -202,13 +205,22 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer))
-        self.inplanes = planes * block.expansion
-        for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes, groups=self.groups,
-                                base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer))
+        if ace2p:
+            generate_multi_grid = lambda index, grids: grids[index % len(grids)] if isinstance(grids, tuple) else 1
+            layers.append(block(self.inplanes, planes, stride, dilation=dilation, downsample=downsample,
+                                ))
+            self.inplanes = planes * block.expansion
+            for i in range(1, blocks):
+                layers.append(
+                    block(self.inplanes, planes, dilation=dilation))
+        else:
+            layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
+                                self.base_width, previous_dilation, norm_layer))
+            self.inplanes = planes * block.expansion
+            for _ in range(1, blocks):
+                layers.append(block(self.inplanes, planes, groups=self.groups,
+                                    base_width=self.base_width, dilation=self.dilation,
+                                    norm_layer=norm_layer))
 
         return nn.Sequential(*layers)
 
