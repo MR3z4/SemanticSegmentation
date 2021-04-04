@@ -15,6 +15,8 @@ def get_argparser():
                         choices=['pascalpart'], help='Name of dataset')
     parser.add_argument("--num_classes", type=int, default=7,
                         help="num classes (default: None)")
+    parser.add_argument("--void_pixels", type=int, default=3,
+                        help="num of void pixels at the border (default: 3)")
 
     # Model Options
     parser.add_argument("--model", type=str, default='ACE2P_resnet101',
@@ -28,7 +30,7 @@ def get_argparser():
                         help="if true ace2p model will use active batchnorm instead of batchnorm")
 
     # Train Options
-    parser.add_argument("--test_only", action='store_true', default=True)
+    parser.add_argument("--test_only", action='store_true', default=False)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
@@ -98,7 +100,6 @@ def get_argparser():
     parser.add_argument("--schp_ckpt", default=None, type=str,
                         help="restore schl model from checkpoint")
 
-
     return parser
 
 
@@ -114,9 +115,11 @@ def get_dataset(opts):
         ])
 
         train_dst = PascalPartSegmentation(root=opts.data_root, split='train', crop_size=[512, 512], scale_factor=0.25,
-                                           rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=transform)
+                                           rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=transform,
+                                           void_pixels=opts.void_pixels)
         val_dst = PascalPartSegmentation(root=opts.data_root, split='val', crop_size=[512, 512], scale_factor=0,
-                                         rotation_factor=0, ignore_label=255, flip_prob=0, transform=transform)
+                                         rotation_factor=0, ignore_label=255, flip_prob=0, transform=transform,
+                                         void_pixels=opts.void_pixels)
 
     else:
         raise Exception("Wrong dataset given. supported choices: pascalpart")

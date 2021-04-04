@@ -6,14 +6,14 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils import data
-
+from utils import add_void
 from utils.ext_transforms import get_affine_transform
 # from ext_transforms import get_affine_transform
 
 
 class PascalPartSegmentation(data.Dataset):
     def __init__(self, root, split, crop_size=[473, 473], scale_factor=0.25,
-                 rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=None):
+                 rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=None, void_pixels=0):
         self.root = root
         self.aspect_ratio = crop_size[1] * 1.0 / crop_size[0]
         self.crop_size = np.asarray(crop_size)
@@ -23,6 +23,7 @@ class PascalPartSegmentation(data.Dataset):
         self.flip_prob = flip_prob
         self.transform = transform
         self.dataset = split
+        self.void_pixels = void_pixels
 
         list_path = os.path.join(self.root, self.dataset + '_id.txt')
         train_list = [i_id.strip() for i_id in open(list_path)]
@@ -108,13 +109,15 @@ class PascalPartSegmentation(data.Dataset):
         if self.dataset == 'test':
             return input, meta
         else:
+            if self.void_pixels>0:
+                parsing_anno = add_void(parsing_anno, width=self.void_pixels, void_value=self.ignore_label)
             label_parsing = cv2.warpAffine(
                 parsing_anno,
                 trans,
                 (int(self.crop_size[1]), int(self.crop_size[0])),
                 flags=cv2.INTER_NEAREST,
                 borderMode=cv2.BORDER_CONSTANT,
-                borderValue=(255))
+                borderValue=(self.ignore_label))
 
             label_parsing = torch.from_numpy(label_parsing)
 

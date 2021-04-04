@@ -3,7 +3,7 @@ from torch.utils import data
 from tqdm import tqdm
 import network
 from datasets import PascalPartValSegmentation
-from utils import ext_transforms as et, utils
+from utils import ext_transforms as et, utils, add_void
 from torchvision.transforms import transforms
 import torch
 import numpy as np
@@ -22,12 +22,15 @@ device = 'cuda'
 model_name = 'ACE2P_resnet101'
 # checkpoint_path = 'best_deeplabv3plus_resnet101_pascalpart_os16_ce_6669_mixwh_ms.pth'
 checkpoint_path = r"ace2p_initial_abn.pth"
+
+
 # img_path = 'samples/23_image.png'
 # lbl_path = 'samples/1_target.png'
 
 model_map = network.model_map
 
-model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False, use_abn=False)
+model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False,
+                              use_abn=False)
 chk = torch.load(checkpoint_path)
 model.load_state_dict(chk['model_state'])
 # model.load_state_dict(chk)
@@ -43,12 +46,13 @@ val_transform = transforms.Compose([
 denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
                            std=[0.229, 0.224, 0.225])
 
-val_dst = PascalPartValSegmentation(root="testimages", ext='.jpg', crop_size=[512, 512], ignore_label=255, transform=val_transform)
+val_dst = PascalPartValSegmentation(root="testimages", ext='.jpg', crop_size=[512, 512], ignore_label=255,
+                                    transform=val_transform)
 val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False, num_workers=0)
 
 for (image, meta) in tqdm(val_loader):
     with torch.no_grad():
-        images = image[:,[2,1,0]].to(device, dtype=torch.float32)
+        images = image[:, [2, 1, 0]].to(device, dtype=torch.float32)
         metas = meta
 
         outputs = model(images)
@@ -69,7 +73,7 @@ for (image, meta) in tqdm(val_loader):
         gt_[(gt_ == (128, 0, 128)).all(2)] = 5
         gt_[(gt_ == (0, 128, 128)).all(2)] = 6
         h, w, _ = gt_.shape
-        person_center, s = PascalPartValSegmentation._box2cs(val_dst,[0, 0, w - 1, h - 1])
+        person_center, s = PascalPartValSegmentation._box2cs(val_dst, [0, 0, w - 1, h - 1])
         r = 0
 
         trans = get_affine_transform(person_center, s, r, val_dst.crop_size)
@@ -81,8 +85,9 @@ for (image, meta) in tqdm(val_loader):
             borderMode=cv2.BORDER_CONSTANT,
             borderValue=(0, 0, 0))
         from metrics import StreamSegMetrics
+
         met = StreamSegMetrics(7)
-        met.update(np.expand_dims(gt_[..., 0],0), np.expand_dims(preds, 0))
+        met.update(np.expand_dims(gt_[..., 0], 0), np.expand_dims(preds, 0))
         print(met.get_results())
         plt.imshow(preds)
         plt.show()

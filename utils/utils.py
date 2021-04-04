@@ -1,5 +1,5 @@
 import os
-
+import cv2
 import numpy as np
 import torch.nn as nn
 from torchvision.transforms.functional import normalize
@@ -42,3 +42,11 @@ def fix_bn(model):
 def mkdir(path):
     if not os.path.exists(path):
         os.mkdir(path)
+
+
+def add_void(label, width=3, void_value=255):
+    mask = label.copy()
+    edge = cv2.Canny(mask, 0, 0)
+    edge = cv2.dilate(edge, np.ones((width, width)))
+    mask[edge == 255] = void_value
+    return mask
