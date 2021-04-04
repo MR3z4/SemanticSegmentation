@@ -119,7 +119,7 @@ def get_dataset(opts):
                                            void_pixels=opts.void_pixels)
         val_dst = PascalPartSegmentation(root=opts.data_root, split='val', crop_size=[512, 512], scale_factor=0,
                                          rotation_factor=0, ignore_label=255, flip_prob=0, transform=transform,
-                                         void_pixels=opts.void_pixels)
+                                         void_pixels=0)
 
     else:
         raise Exception("Wrong dataset given. supported choices: pascalpart")
