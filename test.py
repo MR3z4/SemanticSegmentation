@@ -18,10 +18,10 @@ from utils.ext_transforms import get_affine_transform
 num_classes = 7
 output_stride = 16
 device = 'cuda'
-# model_name = 'deeplabv3plus_resnet101'
-model_name = 'ACE2P_resnet101'
-# checkpoint_path = 'best_deeplabv3plus_resnet101_pascalpart_os16_ce_6669_mixwh_ms.pth'
-checkpoint_path = r"ace2p_initial_abn.pth"
+model_name = 'deeplabv3plus_resnet101v2'
+# model_name = 'ACE2P_resnet101'
+checkpoint_path = 'best_deeplabv3plus_resnet101_pascalpart_os16_ce_6669_mixwh_ms.pth'
+# checkpoint_path = r"ace2p_initial_abn.pth"
 
 
 # img_path = 'samples/23_image.png'
@@ -29,7 +29,7 @@ checkpoint_path = r"ace2p_initial_abn.pth"
 
 model_map = network.model_map
 
-model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=False,
+model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=True,
                               use_abn=False)
 chk = torch.load(checkpoint_path)
 model.load_state_dict(chk['model_state'])

@@ -2,17 +2,16 @@ import torch
 import torch.nn as nn
 from torchvision.models.utils import load_state_dict_from_url
 
-
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
            'wide_resnet50_2', 'wide_resnet101_2']
-
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
     'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet101v2': 'https://drive.google.com/u/0/uc?id=1Cm3k3lu7kP5m45aSXXjVHq14eGzxPZBz',
     'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
     'resnext50_32x4d': 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth',
     'resnext101_32x8d': 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth',
@@ -146,6 +145,7 @@ class ResNet(nn.Module):
                 "3x3 convolution with padding"
                 return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                                  padding=1, bias=False)
+
             self.conv1 = conv3x3(3, 64, stride=2)
             self.bn1 = norm_layer(64)
             self.relu1 = nn.ReLU(inplace=False)
@@ -167,7 +167,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
                                        dilate=replace_stride_with_dilation[1])
         if self.ace2p:
-            self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=2, multi_grid=(1, 1, 1), ace2p=True)
+            self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=2, multi_grid=(1, 1, 1),
+                                           ace2p=True)
         else:
             self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                            dilate=replace_stride_with_dilation[2])
@@ -249,10 +250,22 @@ class ResNet(nn.Module):
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
     model = ResNet(block, layers, **kwargs)
-    if pretrained:
+    if pretrained and arch != 'resnet101v2':
         state_dict = load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
         model.load_state_dict(state_dict)
+    elif pretrained and arch == 'resnet101v2':
+        import gdown
+        from torch.hub import get_dir
+        import os
+        hub_dir = get_dir()
+        model_dir = os.path.join(hub_dir, 'checkpoints')
+        os.makedirs(model_dir, exist_ok=True)
+        output = os.path.join(model_dir,'resnet101v2.pth')
+        if not os.path.exists(output):
+            gdown.download(model_urls[arch], output, quiet=False)
+        state_dict = torch.load(output)
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -301,6 +314,18 @@ def resnet101(pretrained=False, progress=True, **kwargs):
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet101', Bottleneck, [3, 4, 23, 3], pretrained, progress,
+                   **kwargs)
+
+
+def resnet101v2(pretrained=False, progress=True, **kwargs):
+    r"""ResNet-101 model from
+    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
+
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _resnet('resnet101v2', Bottleneck, [3, 4, 23, 3], pretrained, progress,
                    **kwargs)
 
 
