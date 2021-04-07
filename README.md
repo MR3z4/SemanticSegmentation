@@ -158,6 +158,7 @@ Project Link: [https://github.com/MR3z4/SemanticSegmentation](https://github.com
 
 * Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz. "mixup: Beyond Empirical Risk Minimization." arXiv preprint arXiv:1710.09412. [arXiv:1710.09412]( https://arxiv.org/abs/1710.09412 )
 * Hao Yu, Huanyu Wang, Jianxin Wu. "Mixup Without Hesitation" arXiv preprint arXiv:2101.04342. [arXiv:2101.04342]( https://arxiv.org/abs/2101.04342 )
+* Shuai Zhao, Yang Wang, Zheng Yang, Deng Cai. "Region Mutual Information Loss for Semantic Segmentation", NeurIPS 2019, [arXiv:1910.12037](https://arxiv.org/abs/1910.12037), [Project Code](https://github.com/ZJULearning/RMI)
 * Juntang Zhuang, Tommy Tang, Yifan Ding , Sekhar Tatikonda, Nicha Dvornek, Xenophon Papademetris, James S. Duncan. "AdaBelief Optimizer: fast as Adam, generalizes as good
 as SGD, and sufficiently stable to train GANs." [arXiv:2010.07468](https://arxiv.org/abs/2010.07468), [Project Code](https://github.com/juntang-zhuang/Adabelief-Optimizer)
 
