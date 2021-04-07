@@ -9,6 +9,7 @@ import torch.nn as nn
 
 from utils.loss.focal import FocalLoss
 from utils.loss.scploss import SCPLoss
+from utils.loss.rmi import RMILoss
 
 
 class Loss(nn.modules.loss._Loss):
@@ -35,6 +36,13 @@ class Loss(nn.modules.loss._Loss):
                 loss_function = FocalLoss(ignore_index=255, size_average=True)
             elif loss_type == 'L1':
                 loss_function = nn.L1Loss()
+            elif loss_type == 'RMI':
+                loss_function = RMILoss(num_classes=args.num_classes,
+                                        rmi_radius=3,
+                                        rmi_pool_way=1,
+                                        rmi_pool_size=2,
+                                        rmi_pool_stride=2,
+                                        loss_weight_lambda=0.5)
             elif loss_type == 'SCP':
                 loss_function = SCPLoss(ignore_index=255, lambda_1=1, lambda_2=1, lambda_3=0.1, num_classes=20, weight=torch.Tensor(args.loss_weights))
             elif loss_type.find('VGG') >= 0:

@@ -30,7 +30,7 @@ def get_argparser():
                         help="if true ace2p model will use active batchnorm instead of batchnorm")
 
     # Train Options
-    parser.add_argument("--test_only", action='store_true', default=False)
+    parser.add_argument("--test_only", action='store_true', default=True)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
