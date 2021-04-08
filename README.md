@@ -114,8 +114,8 @@ It will be completed over time.
 - [x] Add Mixup Without Hesitation for training with mixup
 - [x] Add AdaBelief optimizer option for training
 - [x] Add CE2P Network(with normal BatchNorm) for training.
-- [ ] Add InPlace Active BatchNorm for CE2P.
-- [ ] Add SCHP completely.
+- [x] Add InPlace Active BatchNorm for CE2P.
+- [x] Add SCHP completely.
 - [ ] Add MixMatch option for training
 - [ ] Add FixMatch option for training
 - [ ] Distibuted support
@@ -156,6 +156,7 @@ Project Link: [https://github.com/MR3z4/SemanticSegmentation](https://github.com
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
+* Peike Li, Yunqiu Xu, Yunchao Wei, Yi Yang. "Self-Correction for Human Parsing" IEEE Transactions on Pattern Analysis and Machine Intelligence 2020, [arXiv:1910.09777](https://arxiv.org/abs/1910.09777), [Project Code](https://github.com/PeikeLi/Self-Correction-Human-Parsing)
 * Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz. "mixup: Beyond Empirical Risk Minimization." arXiv preprint arXiv:1710.09412. [arXiv:1710.09412]( https://arxiv.org/abs/1710.09412 )
 * Hao Yu, Huanyu Wang, Jianxin Wu. "Mixup Without Hesitation" arXiv preprint arXiv:2101.04342. [arXiv:2101.04342]( https://arxiv.org/abs/2101.04342 )
 * Shuai Zhao, Yang Wang, Zheng Yang, Deng Cai. "Region Mutual Information Loss for Semantic Segmentation", NeurIPS 2019, [arXiv:1910.12037](https://arxiv.org/abs/1910.12037), [Project Code](https://github.com/ZJULearning/RMI)
