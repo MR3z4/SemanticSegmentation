@@ -113,7 +113,7 @@ class PascalPartSegmentation(data.Dataset):
             return input, meta
         else:
             if self.return_edge:
-                edge_label = cv2.Canny(parsing_anno, 0, 0)
+                edge_label = (cv2.Canny(parsing_anno, 0, 0)/255)
 
                 edge_parsing = cv2.warpAffine(
                     edge_label,
