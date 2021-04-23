@@ -1,6 +1,6 @@
 from .ace2p import ACE2P, AugmentedCE2PHead
 from .utils import IntermediateLayerGetter
-from ._deeplab import DeepLabHead, DeepLabHeadV3Plus, DeepLabV3
+from ._deeplab import DeepLabHead, DeepLabHeadV3Plus, DeepLabV3, DeepLabV3Edge, DeepLabHeadV3PlusEdge
 from .backbone import resnet
 from .backbone import mobilenetv2
 
@@ -31,6 +31,9 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
     if name == 'deeplabv3plus':
         return_layers = {'layer4': 'out', 'layer1': 'low_level'}
         classifier = DeepLabHeadV3Plus(inplanes, low_level_planes, num_classes, aspp_dilate)
+    elif name == 'deeplabv3plusedge':
+        return_layers = {'layer4': 'out', 'layer1': 'low_level'}
+        classifier = DeepLabHeadV3PlusEdge(inplanes, low_level_planes, num_classes, aspp_dilate)
     elif name == 'deeplabv3':
         return_layers = {'layer4': 'out'}
         classifier = DeepLabHead(inplanes, num_classes, aspp_dilate)
@@ -39,8 +42,9 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
         classifier = AugmentedCE2PHead(inplanes, low_level_planes, num_classes, aspp_dilate, use_abn=use_abn)
 
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
-
-    if 'deeplabv3' in name:
+    if 'edge' in name and 'deeplabv3' in name:
+        model = DeepLabV3Edge(backbone, classifier)
+    elif 'deeplabv3' in name:
         model = DeepLabV3(backbone, classifier)
     elif name == 'ACE2P':
         model = ACE2P(backbone, classifier)
@@ -161,6 +165,18 @@ def deeplabv3plus_resnet101_ver2(num_classes=21, output_stride=8, pretrained_bac
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
     return _load_model('deeplabv3plus', 'resnet101v2', num_classes, output_stride=output_stride,
+                       pretrained_backbone=pretrained_backbone, use_abn=use_abn, ace2p=True)
+
+
+def deeplabv3plusedge_resnet101_ver2(num_classes=21, output_stride=8, pretrained_backbone=True, use_abn=False):
+    """Constructs a DeepLabV3+ model with a ResNet-101 backbone.
+
+    Args:
+        num_classes (int): number of classes.
+        output_stride (int): output stride for deeplab.
+        pretrained_backbone (bool): If True, use the pretrained backbone.
+    """
+    return _load_model('deeplabv3plusedge', 'resnet101v2', num_classes, output_stride=output_stride,
                        pretrained_backbone=pretrained_backbone, use_abn=use_abn, ace2p=True)
 
 

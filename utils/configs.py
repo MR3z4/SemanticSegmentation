@@ -19,9 +19,10 @@ def get_argparser():
                         help="num of void pixels at the border (default: 3)")
 
     # Model Options
-    parser.add_argument("--model", type=str, default='ACE2P_resnet101',
+    parser.add_argument("--model", type=str, default='deeplabv3plusedge_resnet101v2',
                         choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
                                  'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
+                                 'deeplabv3plus_resnet101v2', 'deeplabv3plusedge_resnet101v2',
                                  'deeplabv3_mobilenet', 'deeplabv3plus_mobilenet'], help='model name')
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")
@@ -30,7 +31,7 @@ def get_argparser():
                         help="if true ace2p model will use active batchnorm instead of batchnorm")
 
     # Train Options
-    parser.add_argument("--test_only", action='store_true', default=True)
+    parser.add_argument("--test_only", action='store_true', default=False)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
@@ -48,7 +49,7 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='SCP',
+    parser.add_argument("--loss_type", type=str, default='CE',
                         choices=['MSE', 'CE', 'FL', 'F1', 'SCP'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list,
                         default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
@@ -113,10 +114,10 @@ def get_dataset(opts):
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225]),
         ])
-
+        return_edge = True if 'edge' in opts.model else False
         train_dst = PascalPartSegmentation(root=opts.data_root, split='train', crop_size=[512, 512], scale_factor=0.25,
                                            rotation_factor=30, ignore_label=255, flip_prob=0.5, transform=transform,
-                                           void_pixels=opts.void_pixels)
+                                           void_pixels=opts.void_pixels, return_edge=return_edge)
         val_dst = PascalPartSegmentation(root=opts.data_root, split='val', crop_size=[512, 512], scale_factor=0,
                                          rotation_factor=0, ignore_label=255, flip_prob=0, transform=transform,
                                          void_pixels=0)

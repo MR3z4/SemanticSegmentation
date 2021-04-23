@@ -11,6 +11,10 @@ def get_input(images, labels, opts, device, cur_iter):
     if 'ACE2P' in opts.model:
         edges = generate_edge_tensor(labels)
         edges = edges.type(torch.cuda.LongTensor)
+    elif 'edge' in opts.model:
+        edges = labels[1]
+        edges = edges.to(device, dtype=torch.long)
+        labels = labels[0]
     images = images.to(device, dtype=torch.float32)
     labels = labels.to(device, dtype=torch.long)
 
@@ -42,7 +46,7 @@ def get_input(images, labels, opts, device, cur_iter):
 
         return images, [labels_a, labels_b, lam]
     else:
-        if 'ACE2P' in opts.model:
+        if 'ACE2P' or 'edge' in opts.model:
             return images, [labels, edges]
         else:
             return images, labels
@@ -55,6 +59,11 @@ def calc_loss(criterion, outputs, labels, opts):
     else:
         if 'ACE2P' in opts.model:
             loss = criterion(outputs, labels[0], edges=labels[1])
+        if 'edge' in opts.model:
+            loss_fusion = criterion(outputs[0], labels[0])
+            loss_class = criterion(outputs[1], labels[0])
+            loss_edge = torch.nn.MSELoss()(outputs[2], labels[1])/100
+            loss = loss_class + loss_edge + loss_fusion
         else:
             loss = criterion(outputs, labels)
 

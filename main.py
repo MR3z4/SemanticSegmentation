@@ -39,6 +39,8 @@ def validate(opts, model, loader, device, metrics):
             outputs = model(images)
             if 'ACE2P' in opts.model:
                 preds = outputs[0][0].detach().max(dim=1)[1].cpu().numpy()
+            elif 'edge' in opts.model:
+                preds = outputs[0].detach().max(dim=1)[1].cpu().numpy()
             else:
                 preds = outputs.detach().max(dim=1)[1].cpu().numpy()
             targets = labels.cpu().numpy()
