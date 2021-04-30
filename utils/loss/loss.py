@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from utils.loss.edgeloss import EdgeLoss
 from utils.loss.focal import FocalLoss
 from utils.loss.scploss import SCPLoss
 from utils.loss.rmi import RMILoss
@@ -96,6 +97,8 @@ class Loss(nn.modules.loss._Loss):
             if l['function'] is not None:
                 if l['type'] == 'SCP':
                     loss = l['function'](pred, [target, edges, soft_preds, soft_edges], cycle_n)
+                if l['type'] == 'EL':
+                    loss = l['function'](pred, edges)
                 else:
                     loss = l['function'](pred, target)
                 effective_loss = l['weight'] * loss

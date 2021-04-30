@@ -66,10 +66,9 @@ def calc_loss(criterion, outputs, labels, opts):
             loss_edge = torch.nn.MSELoss()(outputs[2], labels[1])
             loss = loss_class + loss_edge + loss_fusion
         elif 'edgev2' in opts.model:
-            from utils.loss.edgeloss import EdgeLoss
-            loss_class = criterion(outputs, labels[0])
-            loss_edge = EdgeLoss()(outputs, labels[1])
-            loss = loss_class + loss_edge
+            loss = criterion(outputs, labels[0], edges=labels[1])
+            # loss_edge = EdgeLoss()(outputs, labels[1])
+            # loss = loss_class + (opts.edge_loss_weight * loss_edge)
         else:
             loss = criterion(outputs, labels)
 
