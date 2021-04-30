@@ -108,6 +108,7 @@ class Loss(nn.modules.loss._Loss):
                 self.log[-1, i] += self.loss[i - 1]['function'].loss
 
         loss_sum = sum(losses)
+        self.losses = losses
         if len(self.loss) > 1:
             self.log[-1, -1] += loss_sum.item()
 

@@ -1,3 +1,4 @@
+import kornia
 from torch import nn
 
 from utils.train_options import generate_edge_tensor
@@ -14,7 +15,9 @@ class EdgeLoss(nn.Module):
 
     def forward(self, preds, target):
         preds_max = soft_argmax(preds)
-        preds_max = (preds_max > 0) * 1
-        preds_edge = generate_edge_tensor(preds_max)
+        preds_max /= (preds_max+1e-32)
+        # preds_max = (preds_max > 0) * 1
+        # preds_edge = generate_edge_tensor(preds_max)
+        preds_edge = kornia.filters.sobel(preds_max.unsqueeze(1)*1.78889, eps=1e-32).squeeze()
         loss = self.criterion(preds_edge, target)
         return loss
