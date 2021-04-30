@@ -19,10 +19,10 @@ def get_argparser():
                         help="num of void pixels at the border (default: 3)")
 
     # Model Options
-    parser.add_argument("--model", type=str, default='deeplabv3plusedge_resnet101v2',
+    parser.add_argument("--model", type=str, default='deeplabv3plusedgev2_resnet101v2',
                         choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
                                  'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
-                                 'deeplabv3plus_resnet101v2', 'deeplabv3plusedge_resnet101v2',
+                                 'deeplabv3plus_resnet101v2', 'deeplabv3plusedgev1_resnet101v2',
                                  'deeplabv3_mobilenet', 'deeplabv3plus_mobilenet'], help='model name')
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")

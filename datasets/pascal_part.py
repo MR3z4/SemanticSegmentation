@@ -97,6 +97,24 @@ class PascalPartSegmentation(data.Dataset):
             borderMode=cv2.BORDER_CONSTANT,
             borderValue=(0, 0, 0))
 
+        if self.return_edge:
+            width = 10
+            label_edge = cv2.Canny(parsing_anno, 0, 0)
+            label_edge = cv2.dilate(label_edge, np.ones((width, width)))
+            input_edge = cv2.Canny(input, 100, 200, L2gradient=True)
+
+            edge_parsing = cv2.warpAffine(
+                label_edge,
+                trans,
+                (int(self.crop_size[1]), int(self.crop_size[0])),
+                flags=cv2.INTER_NEAREST,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=0)
+
+            edge_parsing = (edge_parsing.astype(int) * input_edge.astype(int)).clip(max=1)
+
+            edge_parsing = torch.from_numpy(edge_parsing)
+
         if self.transform:
             input = self.transform(input)
 
@@ -112,18 +130,6 @@ class PascalPartSegmentation(data.Dataset):
         if self.dataset == 'test':
             return input, meta
         else:
-            if self.return_edge:
-                edge_label = (cv2.Canny(parsing_anno, 0, 0)/255)
-
-                edge_parsing = cv2.warpAffine(
-                    edge_label,
-                    trans,
-                    (int(self.crop_size[1]), int(self.crop_size[0])),
-                    flags=cv2.INTER_NEAREST,
-                    borderMode=cv2.BORDER_CONSTANT,
-                    borderValue=0)
-
-                edge_parsing = torch.from_numpy(edge_parsing)
 
             if self.void_pixels > 0:
                 parsing_anno = add_void(parsing_anno, width=self.void_pixels, void_value=self.ignore_label)

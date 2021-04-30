@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import random
 import numpy as np
 from torch.nn import functional as F
+
 from utils.mixup import mixup_data, mixup_criterion
 
 
@@ -59,11 +60,16 @@ def calc_loss(criterion, outputs, labels, opts):
     else:
         if 'ACE2P' in opts.model:
             loss = criterion(outputs, labels[0], edges=labels[1])
-        elif 'edge' in opts.model:
+        elif 'edgev1' in opts.model:
             loss_fusion = criterion(outputs[0], labels[0])
             loss_class = criterion(outputs[1], labels[0])
             loss_edge = torch.nn.MSELoss()(outputs[2], labels[1])
             loss = loss_class + loss_edge + loss_fusion
+        elif 'edgev2' in opts.model:
+            from utils.loss.edgeloss import EdgeLoss
+            loss_class = criterion(outputs, labels[0])
+            loss_edge = EdgeLoss()(outputs, labels[1])
+            loss = loss_class + loss_edge
         else:
             loss = criterion(outputs, labels)
 

@@ -31,7 +31,7 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
     if name == 'deeplabv3plus':
         return_layers = {'layer4': 'out', 'layer1': 'low_level'}
         classifier = DeepLabHeadV3Plus(inplanes, low_level_planes, num_classes, aspp_dilate)
-    elif name == 'deeplabv3plusedge':
+    elif name == 'deeplabv3plusedgev1':
         return_layers = {'layer4': 'out', 'layer1': 'low_level'}
         classifier = DeepLabHeadV3PlusEdge(inplanes, low_level_planes, num_classes, aspp_dilate)
     elif name == 'deeplabv3':
@@ -42,7 +42,7 @@ def _segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
         classifier = AugmentedCE2PHead(inplanes, low_level_planes, num_classes, aspp_dilate, use_abn=use_abn)
 
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
-    if 'edge' in name and 'deeplabv3' in name:
+    if 'edgev1' in name and 'deeplabv3' in name:
         model = DeepLabV3Edge(backbone, classifier)
     elif 'deeplabv3' in name:
         model = DeepLabV3(backbone, classifier)
@@ -168,7 +168,7 @@ def deeplabv3plus_resnet101_ver2(num_classes=21, output_stride=8, pretrained_bac
                        pretrained_backbone=pretrained_backbone, use_abn=use_abn, ace2p=True)
 
 
-def deeplabv3plusedge_resnet101_ver2(num_classes=21, output_stride=8, pretrained_backbone=True, use_abn=False):
+def deeplabv3plusedgev1_resnet101_ver2(num_classes=21, output_stride=8, pretrained_backbone=True, use_abn=False):
     """Constructs a DeepLabV3+ model with a ResNet-101 backbone.
 
     Args:
@@ -176,7 +176,7 @@ def deeplabv3plusedge_resnet101_ver2(num_classes=21, output_stride=8, pretrained
         output_stride (int): output stride for deeplab.
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
-    return _load_model('deeplabv3plusedge', 'resnet101v2', num_classes, output_stride=output_stride,
+    return _load_model('deeplabv3plusedgev1', 'resnet101v2', num_classes, output_stride=output_stride,
                        pretrained_backbone=pretrained_backbone, use_abn=use_abn, ace2p=True)
 
 

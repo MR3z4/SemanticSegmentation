@@ -36,6 +36,8 @@ class Loss(nn.modules.loss._Loss):
                 loss_function = FocalLoss(ignore_index=255, size_average=True)
             elif loss_type == 'L1':
                 loss_function = nn.L1Loss()
+            elif loss_type == 'EL':
+                loss_function = EdgeLoss()
             elif loss_type == 'RMI':
                 loss_function = RMILoss(num_classes=args.num_classes,
                                         rmi_radius=3,

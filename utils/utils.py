@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+import torch
 import torch.nn as nn
 from torchvision.transforms.functional import normalize
 
@@ -50,3 +51,22 @@ def add_void(label, width=3, void_value=255):
     edge = cv2.dilate(edge, np.ones((width, width)))
     mask[edge == 255] = void_value
     return mask
+
+
+def soft_argmax(voxels):
+    """
+    Arguments: voxel patch in shape (batch_size, channel, H, W)
+    Return: 3D coordinates in shape (batch_size, H, W)
+    """
+    assert voxels.dim() == 4
+    # alpha is here to make the largest element really big, so it
+    # would become very close to 1 after softmax
+    alpha = 10000.0
+    N, C, H, W = voxels.shape
+    soft_max = nn.functional.softmax(voxels.permute(0, 2, 3, 1) * alpha, dim=3)
+    indices_kernel = torch.arange(start=0, end=C, dtype=torch.float32, device=voxels.device).unsqueeze(0)
+    conv = soft_max * indices_kernel
+    indices = conv.sum(3)
+    out = indices % C
+
+    return out
