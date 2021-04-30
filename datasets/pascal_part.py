@@ -99,7 +99,8 @@ class PascalPartSegmentation(data.Dataset):
 
         if self.return_edge:
             width = 10
-            label_edge = cv2.Canny(parsing_anno, 0, 0)
+            # label_edge = cv2.Canny(parsing_anno, 0, 0)  # all parts edge
+            label_edge = cv2.Canny(((parsing_anno > 0) * 1).astype('uint8'), 0, 0)  # whole human edge
             label_edge = cv2.dilate(label_edge, np.ones((width, width)))
             input_edge = cv2.Canny(input, 100, 200, L2gradient=True)
 
@@ -111,7 +112,8 @@ class PascalPartSegmentation(data.Dataset):
                 borderMode=cv2.BORDER_CONSTANT,
                 borderValue=0)
 
-            edge_parsing = (edge_parsing.astype(int) * input_edge.astype(int)).clip(max=1)
+            edge_parsing = (edge_parsing.astype(int) * input_edge.astype(int)).clip(max=255).astype('uint8')
+            edge_parsing = cv2.dilate(edge_parsing, np.ones((3, 3))).clip(max=1)
 
             edge_parsing = torch.from_numpy(edge_parsing)
 
