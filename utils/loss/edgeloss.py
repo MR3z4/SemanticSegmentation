@@ -1,5 +1,6 @@
 import kornia
 from torch import nn
+from torch.nn.functional import binary_cross_entropy
 
 from utils.train_options import generate_edge_tensor
 from utils.utils import soft_argmax
@@ -10,7 +11,8 @@ class EdgeLoss(nn.Module):
         super(EdgeLoss, self).__init__()
         self.ignore_index = ignore_index
         # self.criterion = nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weight)
-        self.criterion = nn.BCELoss(weight=weight)
+        # self.criterion = nn.BCELoss(weight=weight)
+        self.criterion = binary_cross_entropy
         # self.criterion = nn.MSELoss()
         self.num_classes = num_classes
 
@@ -20,5 +22,6 @@ class EdgeLoss(nn.Module):
         # preds_max = (preds_max > 0) * 1
         # preds_edge = generate_edge_tensor(preds_max)
         preds_edge = kornia.filters.sobel(preds_max.unsqueeze(1) * 1.7888, eps=1e-32).squeeze()
-        loss = 0.1 * self.criterion(preds_edge, target) + 0.9 * self.criterion((1 - preds_edge), (1 - target))
+        weight = target + 0.1
+        loss = self.criterion(preds_edge, target, weight=weight)
         return loss
