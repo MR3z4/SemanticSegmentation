@@ -10,7 +10,8 @@ class EdgeLoss(nn.Module):
         super(EdgeLoss, self).__init__()
         self.ignore_index = ignore_index
         # self.criterion = nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weight)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.BCELoss(weight=weight)
+        # self.criterion = nn.MSELoss()
         self.num_classes = num_classes
 
     def forward(self, preds, target):
@@ -18,6 +19,6 @@ class EdgeLoss(nn.Module):
         preds_max /= (preds_max+1e-32)
         # preds_max = (preds_max > 0) * 1
         # preds_edge = generate_edge_tensor(preds_max)
-        preds_edge = kornia.filters.sobel(preds_max.unsqueeze(1)*1.78889, eps=1e-32).squeeze()
+        preds_edge = kornia.filters.sobel(preds_max.unsqueeze(1)*1.7888, eps=1e-32).squeeze()
         loss = self.criterion(preds_edge, target)
         return loss
