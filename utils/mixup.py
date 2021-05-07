@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def mixup_data(x, y, alpha=1.0, device='cuda'):
+def mixup_data(x, y, alpha=1.0, device='cuda', has_edge=False):
     '''Compute the mixup data. Return mixed inputs, pairs of targets, and lambda'''
     if alpha > 0.:
         lam = np.random.beta(alpha, alpha)
@@ -13,10 +13,17 @@ def mixup_data(x, y, alpha=1.0, device='cuda'):
     index = torch.randperm(batch_size).to(device)
 
     mixed_x = lam * x + (1 - lam) * x[index, :]
-    y_a, y_b = y, y[index]
+    if has_edge:
+        y_a = y
+        y_b = [y[0][index], y[1][index]]
+    else:
+        y_a, y_b = y, y[index]
 
     return mixed_x, y_a, y_b, lam
 
 
-def mixup_criterion(criterion, pred, y_a, y_b, lam):
-    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+def mixup_criterion(criterion, pred, y_a, y_b, lam, edges=False):
+    if edges:
+        return lam * criterion(pred, y_a[0], edges=y_a[1]) + (1 - lam) * criterion(pred, y_b[0], edges=y_b[1])
+    else:
+        return lam * criterion(pred, y_a, edges=edges) + (1 - lam) * criterion(pred, y_b, edges=edges)
