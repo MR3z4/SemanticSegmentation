@@ -19,11 +19,17 @@ def mixup_data(x, y, alpha=1.0, device='cuda', has_edge=False):
     else:
         y_a, y_b = y, y[index]
 
-    return mixed_x, y_a, y_b, lam
+    return [mixed_x, [x, x[index]]], y_a, y_b, lam
 
 
-def mixup_criterion(criterion, pred, y_a, y_b, lam, edges=False):
+def mixup_criterion(criterion, pred, y_a, y_b, lam, edges=False, soft_preds=None, soft_edges=None, cycle_n=None):
     if edges:
-        return lam * criterion(pred, y_a[0], edges=y_a[1]) + (1 - lam) * criterion(pred, y_b[0], edges=y_b[1])
+        return lam * criterion(pred, y_a[0], edges=y_a[1], soft_preds=soft_preds[0], soft_edges=soft_edges[0],
+                               cycle_n=cycle_n) + (1 - lam) * criterion(pred, y_b[0], edges=y_b[1],
+                                                                        soft_preds=soft_preds[1],
+                                                                        soft_edges=soft_edges[1], cycle_n=cycle_n)
     else:
-        return lam * criterion(pred, y_a, edges=edges) + (1 - lam) * criterion(pred, y_b, edges=edges)
+        return lam * criterion(pred, y_a, edges=edges, soft_preds=soft_preds[0], soft_edges=soft_edges[0],
+                               cycle_n=cycle_n) + (1 - lam) * criterion(pred, y_b, edges=edges,
+                                                                        soft_preds=soft_preds[1],
+                                                                        soft_edges=soft_edges[1], cycle_n=cycle_n)

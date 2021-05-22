@@ -191,6 +191,7 @@ def main():
         return
 
     interval_loss = 0
+    torch.autograd.set_detect_anomaly(True)
     while True:  # cur_itrs < opts.total_itrs:
         # =====  Train  =====
         criterion.start_log()
@@ -202,32 +203,48 @@ def main():
             # images = images.to(device, dtype=torch.float32)
             # labels = labels.to(device, dtype=torch.long)
             images, labels = get_input(images, labels, opts, device, cur_itrs)
+            if opts.use_mixup:
+                images, main_images = images
+            else:
+                main_images = None
 
             optimizer.zero_grad()
             outputs = model(images)
 
             if opts.use_schp:
                 # Online Self Correction Cycle with Label Refinement
+                soft_labels = []
                 if cycle_n >= 1:
                     with torch.no_grad():
-                        soft_preds = schp_model(images)
-                        soft_edges = soft_preds[1][-1]
-                        soft_preds = soft_preds[0][-1]
-                        # soft_parsing = []
-                        # soft_edge = []
-                        # for soft_pred in soft_preds:
-                        #     soft_parsing.append(soft_pred[0][-1])
-                        #     soft_edge.append(soft_pred[1][-1])
-                        # soft_preds = torch.cat(soft_parsing, dim=0)
-                        # soft_edges = torch.cat(soft_edge, dim=0)
+                        if opts.use_mixup:
+                            soft_preds = [schp_model(main_images[0]), schp_model(main_images[1])]
+                            soft_edges = [None, None]
+                        else:
+                            soft_preds = schp_model(images)
+                            soft_edges = None
+                        if 'ACE2P' in opts.model:
+                            soft_edges = soft_preds[1][-1]
+                            soft_preds = soft_preds[0][-1]
+                            # soft_parsing = []
+                            # soft_edge = []
+                            # for soft_pred in soft_preds:
+                            #     soft_parsing.append(soft_pred[0][-1])
+                            #     soft_edge.append(soft_pred[1][-1])
+                            # soft_preds = torch.cat(soft_parsing, dim=0)
+                            # soft_edges = torch.cat(soft_edge, dim=0)
                 else:
-                    soft_preds = None
-                    soft_edges = None
-                labels.append(soft_preds)
-                labels.append(soft_edges)
+                    if opts.use_mixup:
+                        soft_preds = [None,None]
+                        soft_edges = [None,None]
+                    else:
+                        soft_preds = None
+                        soft_edges = None
+                soft_labels.append(soft_preds)
+                soft_labels.append(soft_edges)
+                labels = [labels, soft_labels]
 
             # loss = criterion(outputs, labels)
-            loss = calc_loss(criterion, outputs, labels, opts)
+            loss = calc_loss(criterion, outputs, labels, opts, cycle_n)
             loss.backward()
             optimizer.step()
 

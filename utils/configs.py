@@ -86,13 +86,13 @@ def get_argparser():
                         help='to either use mixup or not')
     parser.add_argument("--mixup_alpha", type=float, default=0.2,
                         help='the alpha parameter used in mixup (default: 0.2)')
-    parser.add_argument("--use_mixup_mwh", action='store_true', default=False,
+    parser.add_argument("--use_mixup_mwh", action='store_true', default=True,
                         help='if using mixup, you can choose to train with Mixup Without Hesitation method')
     parser.add_argument("--mwh_stages", type=list, default=[0.6, 0.9],
                         help='the percent of the max iteration to be set for each stage in mwh. (it has 3 stages)')
 
     # SCHP Train Options
-    parser.add_argument("--use_schp", action='store_true', default=False,
+    parser.add_argument("--use_schp", action='store_true', default=True,
                         help='to either use SCHP or not')
     parser.add_argument("--schp_start", type=int, default=10,
                         help='SCHP start epoch')

@@ -28,5 +28,5 @@ class KLDivergenceLoss(nn.Module):
     def forward(self, input, target, label):
         log_input_prob = F.log_softmax(input / self.T, dim=1)
         target_porb = F.softmax(target / self.T, dim=1)
-        loss = F.kl_div(*flatten_probas(log_input_prob, target_porb, label, ignore=self.ignore_index))
+        loss = F.kl_div(*flatten_probas(log_input_prob, target_porb, label, ignore=self.ignore_index), reduction='batchmean')
         return self.T*self.T*loss # balanced

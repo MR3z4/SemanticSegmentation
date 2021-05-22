@@ -9,7 +9,9 @@ import torch.nn as nn
 
 from utils.loss.edgeloss import EdgeLoss
 from utils.loss.focal import FocalLoss
-from utils.loss.scploss import SCPLoss
+from utils.loss.kl_loss import KLDivergenceLoss
+from utils.loss.lovasz_softmax import LovaszSoftmax
+from utils.loss.scploss import SCPLoss, moving_average, to_one_hot
 from utils.loss.rmi import RMILoss
 
 
@@ -19,6 +21,9 @@ class Loss(nn.modules.loss._Loss):
         print('Preparing loss function:')
 
         self.n_GPUs = len([int(id) for id in args.gpu_ids.split(',')])
+        self.num_classes = args.num_classes
+        self.lovasz = LovaszSoftmax(ignore_index=255)
+        self.kldiv = KLDivergenceLoss(ignore_index=255)
         self.loss = []
         self.loss_module = nn.ModuleList()
         for loss in args.loss_type.replace(" ", "").split('+'):
@@ -32,7 +37,8 @@ class Loss(nn.modules.loss._Loss):
             if loss_type == 'MSE':
                 loss_function = nn.MSELoss()
             elif loss_type == 'CE':
-                loss_function = nn.CrossEntropyLoss(ignore_index=255, reduction='mean', weight=torch.Tensor(args.loss_weights))
+                loss_function = nn.CrossEntropyLoss(ignore_index=255, reduction='mean',
+                                                    weight=torch.Tensor(args.loss_weights))
             elif loss_type == 'FL':
                 loss_function = FocalLoss(ignore_index=255, size_average=True)
             elif loss_type == 'L1':
@@ -47,7 +53,8 @@ class Loss(nn.modules.loss._Loss):
                                         rmi_pool_stride=2,
                                         loss_weight_lambda=0.5)
             elif loss_type == 'SCP':
-                loss_function = SCPLoss(ignore_index=255, lambda_1=1, lambda_2=1, lambda_3=0.1, num_classes=20, weight=torch.Tensor(args.loss_weights))
+                loss_function = SCPLoss(ignore_index=255, lambda_1=1, lambda_2=1, lambda_3=0.1, num_classes=20,
+                                        weight=torch.Tensor(args.loss_weights))
             elif loss_type.find('VGG') >= 0:
                 module = import_module('loss.vgg')
                 loss_function = getattr(module, 'VGG')(
@@ -98,9 +105,23 @@ class Loss(nn.modules.loss._Loss):
                 if l['type'] == 'SCP':
                     loss = l['function'](pred, [target, edges, soft_preds, soft_edges], cycle_n)
                 if l['type'] == 'EL':
-                    loss = l['function'](pred, edges)
+                    if soft_edges is not None:
+                        loss = 0.5 * l['function'](pred, edges)
+                        soft_edge = moving_average(soft_edges, to_one_hot(edges, num_cls=self.num_classes),
+                                                   1.0 / (cycle_n + 1.0))
+                        loss += 0.5 * self.kldiv(pred, soft_edge, edges)
+                    else:
+                        loss = l['function'](pred, edges)
                 else:
-                    loss = l['function'](pred, target)
+                    if soft_preds is not None:
+                        # loss1 = 0.5 * self.lovasz(pred, target)
+                        soft_pred = moving_average(soft_preds, to_one_hot(target, num_cls=self.num_classes),
+                                                   1.0 / (cycle_n + 1.0))
+                        loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
+                        loss1 = 0.5 * l['function'](pred, target)
+                        loss = loss1 + loss2
+                    else:
+                        loss = l['function'](pred, target)
                 effective_loss = l['weight'] * loss
                 losses.append(effective_loss)
                 self.log[-1, i] += effective_loss.item()
