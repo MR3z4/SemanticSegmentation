@@ -38,7 +38,7 @@ def get_input(images, labels, opts, device, cur_iter):
                     images, labels_a, labels_b, lam = mixup_data(images, labels, opts.mixup_alpha, device,
                                                                  has_edge=has_edge)
                 else:
-                    images = images, images
+                    images = images, [images, images]
                     labels_a, labels_b = labels, labels
                     lam = 1.0
             elif cur_iter >= stage1:
@@ -47,7 +47,7 @@ def get_input(images, labels, opts, device, cur_iter):
                     images, labels_a, labels_b, lam = mixup_data(images, labels, opts.mixup_alpha, device,
                                                                  has_edge=has_edge)
                 else:
-                    images = images, images
+                    images = images, [images, images]
                     labels_a, labels_b = labels, labels
                     lam = 1.0
             else:
