@@ -38,6 +38,7 @@ def get_input(images, labels, opts, device, cur_iter):
                     images, labels_a, labels_b, lam = mixup_data(images, labels, opts.mixup_alpha, device,
                                                                  has_edge=has_edge)
                 else:
+                    images = images, images
                     labels_a, labels_b = labels, labels
                     lam = 1.0
             elif cur_iter >= stage1:
@@ -46,6 +47,7 @@ def get_input(images, labels, opts, device, cur_iter):
                     images, labels_a, labels_b, lam = mixup_data(images, labels, opts.mixup_alpha, device,
                                                                  has_edge=has_edge)
                 else:
+                    images = images, images
                     labels_a, labels_b = labels, labels
                     lam = 1.0
             else:
@@ -59,7 +61,7 @@ def get_input(images, labels, opts, device, cur_iter):
                     (images[0], images[1][0], images[1][1], labels_a[0], labels_a[1], labels_b[0], labels_b[1]))
             else:
                 images[0], images[1][0], images[1][1], labels_a, labels_b = map(Variable, (
-                images[0], images[1][0], images[1][1], labels_a, labels_b))
+                    images[0], images[1][0], images[1][1], labels_a, labels_b))
 
         return images, [labels_a, labels_b, lam]
     else:
@@ -86,14 +88,17 @@ def calc_loss(criterion, outputs, labels, opts, cycle_n=None):
                                soft_edges=soft_edges, cycle_n=cycle_n)
     else:
         if 'ACE2P' in opts.model:
-            loss = criterion(outputs, labels[0], edges=labels[1], soft_preds=soft_preds, soft_edges=soft_edges, cycle_n=cycle_n)
+            loss = criterion(outputs, labels[0], edges=labels[1], soft_preds=soft_preds, soft_edges=soft_edges,
+                             cycle_n=cycle_n)
         elif 'edgev1' in opts.model:
-            loss_fusion = criterion(outputs[0], labels[0], soft_preds=soft_preds, soft_edges=soft_edges, cycle_n=cycle_n)
+            loss_fusion = criterion(outputs[0], labels[0], soft_preds=soft_preds, soft_edges=soft_edges,
+                                    cycle_n=cycle_n)
             loss_class = criterion(outputs[1], labels[0], soft_preds=soft_preds, soft_edges=soft_edges, cycle_n=cycle_n)
             loss_edge = torch.nn.MSELoss()(outputs[2], labels[1])
             loss = loss_class + loss_edge + loss_fusion
         elif 'edgev2' in opts.model:
-            loss = criterion(outputs, labels[0], edges=labels[1], soft_preds=soft_preds, soft_edges=soft_edges, cycle_n=cycle_n)
+            loss = criterion(outputs, labels[0], edges=labels[1], soft_preds=soft_preds, soft_edges=soft_edges,
+                             cycle_n=cycle_n)
             # loss_edge = EdgeLoss()(outputs, labels[1])
             # loss = loss_class + (opts.edge_loss_weight * loss_edge)
         else:
