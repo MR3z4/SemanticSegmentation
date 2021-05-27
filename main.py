@@ -34,7 +34,7 @@ def validate(opts, model, loader, device, metrics):
         for i, (images, labels) in tqdm(enumerate(loader)):
 
             images = images.to(device, dtype=torch.float32)
-            images = images[:, [2, 1, 0]] #for backbone
+            images = images[:, [2, 1, 0]]  # for backbone
             labels = labels.to(device, dtype=torch.long)
 
             outputs = model(images)
@@ -158,7 +158,7 @@ def main(criterion):
         if opts.continue_training:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
-            cur_epochs = checkpoint["cur_epochs"] - 1 # to start from the last epoch for schp
+            cur_epochs = checkpoint["cur_epochs"] - 1  # to start from the last epoch for schp
             cur_itrs = checkpoint["cur_itrs"]
             best_score = checkpoint['best_score']
             print("Training state restored from %s" % opts.ckpt)
@@ -195,7 +195,7 @@ def main(criterion):
                 images, main_images = images
             else:
                 main_images = None
-            images = images[:, [2, 1, 0]] #for backbone
+            images = images[:, [2, 1, 0]]  # for backbone
             optimizer.zero_grad()
             outputs = model(images)
 

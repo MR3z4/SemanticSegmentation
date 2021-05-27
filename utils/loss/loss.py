@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from utils import soft_argmax
 from utils.loss.edgeloss import EdgeLoss
 from utils.loss.focal import FocalLoss
 from utils.loss.kl_loss import KLDivergenceLoss
@@ -110,6 +111,7 @@ class Loss(nn.modules.loss._Loss):
                         soft_edge = moving_average(soft_edges, to_one_hot(edges, num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_edge, edges)
+                        # TODO: this part need to be checked.
                         loss2 = 0.5 * l['function'](pred, soft_edge)
                         loss = loss1 + loss2
                     else:
@@ -121,7 +123,7 @@ class Loss(nn.modules.loss._Loss):
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
                         loss1 = 0.5 * l['function'](pred, target)
-                        loss2 = 0.5 * l['function'](pred, soft_pred)
+                        loss2 = 0.5 * l['function'](pred, soft_argmax(soft_pred).long())
                         loss = loss1 + loss2
                     else:
                         loss = l['function'](pred, target)
