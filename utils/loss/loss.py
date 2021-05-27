@@ -123,7 +123,7 @@ class Loss(nn.modules.loss._Loss):
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
                         loss1 = 0.5 * l['function'](pred, target)
-                        loss2 = 0.5 * l['function'](pred, soft_argmax(soft_pred).long())
+                        loss2 = 0.5 * l['function'](pred, soft_argmax(soft_pred).round().long())
                         loss = loss1 + loss2
                     else:
                         loss = l['function'](pred, target)
