@@ -106,10 +106,12 @@ class Loss(nn.modules.loss._Loss):
                     loss = l['function'](pred, [target, edges, soft_preds, soft_edges], cycle_n)
                 if l['type'] == 'EL':
                     if soft_edges is not None:
-                        loss = 0.5 * l['function'](pred, edges)
+                        loss1 = 0.5 * l['function'](pred, edges)
                         soft_edge = moving_average(soft_edges, to_one_hot(edges, num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
-                        loss += 0.5 * self.kldiv(pred, soft_edge, edges)
+                        # loss2 = 0.5 * self.kldiv(pred, soft_edge, edges)
+                        loss2 = 0.5 * l['function'](pred, soft_edge)
+                        loss = loss1 + loss2
                     else:
                         loss = l['function'](pred, edges)
                 else:
@@ -117,8 +119,9 @@ class Loss(nn.modules.loss._Loss):
                         # loss1 = 0.5 * self.lovasz(pred, target)
                         soft_pred = moving_average(soft_preds, to_one_hot(target, num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
-                        loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
+                        # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
                         loss1 = 0.5 * l['function'](pred, target)
+                        loss2 = 0.5 * l['function'](pred, soft_pred)
                         loss = loss1 + loss2
                     else:
                         loss = l['function'](pred, target)
