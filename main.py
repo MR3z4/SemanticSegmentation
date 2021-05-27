@@ -34,9 +34,11 @@ def validate(opts, model, loader, device, metrics):
         for i, (images, labels) in tqdm(enumerate(loader)):
 
             images = images.to(device, dtype=torch.float32)
+            images = images[:, [2, 1, 0]] #for backbone
             labels = labels.to(device, dtype=torch.long)
 
             outputs = model(images)
+
             if 'ACE2P' in opts.model:
                 preds = outputs[0][0].detach().max(dim=1)[1].cpu().numpy()
             elif 'edgev1' in opts.model:
@@ -76,16 +78,7 @@ def validate(opts, model, loader, device, metrics):
     return score
 
 
-def main():
-    opts = get_argparser().parse_args()
-    if 'ACE2P' in opts.model:
-        opts.loss_type = 'SCP'
-        opts.use_mixup = False
-    os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_ids
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    opts.device = device
-    print("Device: %s" % device)
-
+def main(criterion):
     # Setup random seed
     torch.manual_seed(opts.random_seed)
     np.random.seed(opts.random_seed)
@@ -107,7 +100,6 @@ def main():
     if opts.use_schp:
         schp_model = network.model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride,
                                                    pretrained_backbone=pretrained_backbone, use_abn=opts.use_abn)
-
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
@@ -116,7 +108,7 @@ def main():
     metrics = StreamSegMetrics(opts.num_classes)
 
     # Set up optimizer
-    model_params = [{'params': model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+    model_params = [{'params': model.backbone.parameters(), 'lr': 0.01 * opts.lr},
                     {'params': model.classifier.parameters(), 'lr': opts.lr}, ]
     optimizer = create_optimizer(opts, model_params=model_params)
     # optimizer = torch.optim.SGD(params=[
@@ -129,8 +121,6 @@ def main():
         scheduler = utils.PolyLR(optimizer, opts.total_itrs, power=0.9)
     elif opts.lr_policy == 'step':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.step_size, gamma=0.1)
-
-    criterion = Loss(opts)
 
     def save_ckpt(path):
         """ save current model
@@ -168,7 +158,7 @@ def main():
         if opts.continue_training:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
-            cur_epochs = checkpoint["cur_epochs"]
+            cur_epochs = checkpoint["cur_epochs"] - 1 # to start from the last epoch for schp
             cur_itrs = checkpoint["cur_itrs"]
             best_score = checkpoint['best_score']
             print("Training state restored from %s" % opts.ckpt)
@@ -189,9 +179,7 @@ def main():
             opts=opts, model=model, loader=val_loader, device=device, metrics=metrics)
         print(metrics.to_str(val_score))
         return
-
     interval_loss = 0
-    torch.autograd.set_detect_anomaly(True)
     while True:  # cur_itrs < opts.total_itrs:
         # =====  Train  =====
         criterion.start_log()
@@ -207,7 +195,7 @@ def main():
                 images, main_images = images
             else:
                 main_images = None
-
+            images = images[:, [2, 1, 0]] #for backbone
             optimizer.zero_grad()
             outputs = model(images)
 
@@ -234,8 +222,8 @@ def main():
                             # soft_edges = torch.cat(soft_edge, dim=0)
                 else:
                     if opts.use_mixup:
-                        soft_preds = [None,None]
-                        soft_edges = [None,None]
+                        soft_preds = [None, None]
+                        soft_edges = [None, None]
                     else:
                         soft_preds = None
                         soft_edges = None
@@ -250,13 +238,17 @@ def main():
 
             np_loss = loss.detach().cpu().numpy()
             interval_loss += np_loss
-
-            print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={np_loss}", end='')
+            sub_loss_text = ''
+            for sub_loss, sub_prop in zip(criterion.losses, criterion.loss):
+                if sub_prop['weight'] > 0:
+                    sub_loss_text += f", {sub_prop['type']}: {sub_loss.item()}"
+            print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={np_loss}{sub_loss_text}", end='')
 
             if (cur_itrs) % 10 == 0:
                 interval_loss = interval_loss / 10
-                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss}")
+                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss}{sub_loss_text}")
                 interval_loss = 0.0
+                torch.cuda.empty_cache()
 
             if (cur_itrs) % opts.save_interval == 0 and (cur_itrs) % opts.val_interval != 0:
                 save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
@@ -274,16 +266,19 @@ def main():
                     best_score = val_score['Mean IoU']
                     save_ckpt('checkpoints/best_%s_%s_os%d.pth' %
                               (opts.model, opts.dataset, opts.output_stride))
+                    # save_ckpt('/content/drive/MyDrive/best_%s_%s_os%d.pth' %
+                    #           (opts.model, opts.dataset, opts.output_stride))
                 model.train()
             scheduler.step()
 
             if cur_itrs >= opts.total_itrs:
+                criterion.end_log(len(train_loader))
                 return
 
         # Self Correction Cycle with Model Aggregation
         if opts.use_schp:
             if (cur_epochs + 1) >= opts.schp_start and (cur_epochs + 1 - opts.schp_start) % opts.cycle_epochs == 0:
-                print(f'Self-correction cycle number {cycle_n}')
+                print(f'\nSelf-correction cycle number {cycle_n}')
 
                 schp.moving_average(schp_model, model, 1.0 / (cycle_n + 1))
                 cycle_n += 1
@@ -292,9 +287,23 @@ def main():
                     'state_dict': schp_model.state_dict(),
                     'cycle_n': cycle_n,
                 }, False, "checkpoints", filename=f'schp_{opts.model}_{opts.dataset}_cycle{cycle_n}_checkpoint.pth')
-
+                # schp.save_schp_checkpoint({
+                #     'state_dict': schp_model.state_dict(),
+                #     'cycle_n': cycle_n,
+                # }, False, '/content/drive/MyDrive/', filename=f'schp_{opts.model}_{opts.dataset}_checkpoint.pth')
+        torch.cuda.empty_cache()
         criterion.end_log(len(train_loader))
 
 
 if __name__ == '__main__':
-    main()
+    opts = get_argparser().parse_args(args=[])
+    if 'ACE2P' in opts.model:
+        opts.loss_type = 'SCP'
+        opts.use_mixup = False
+    os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_ids
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    opts.device = device
+    print("Device: %s" % device)
+    criterion = Loss(opts)
+    main(criterion)
+    criterion.plot_loss('/content/drive/MyDrive/', len(criterion.log))
