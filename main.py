@@ -236,17 +236,18 @@ def main(criterion):
             loss.backward()
             optimizer.step()
 
+            criterion.batch_step(len(images))
             np_loss = loss.detach().cpu().numpy()
             interval_loss += np_loss
             sub_loss_text = ''
             for sub_loss, sub_prop in zip(criterion.losses, criterion.loss):
                 if sub_prop['weight'] > 0:
-                    sub_loss_text += f", {sub_prop['type']}: {sub_loss.item()}"
-            print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={np_loss}{sub_loss_text}", end='')
+                    sub_loss_text += f", {sub_prop['type']}: {sub_loss.item():.4f}"
+            print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={np_loss:.4f}{sub_loss_text}", end='')
 
             if (cur_itrs) % 10 == 0:
                 interval_loss = interval_loss / 10
-                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss}{sub_loss_text}")
+                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss:.4f}{criterion.display_loss().replace('][',', ')}")
                 interval_loss = 0.0
                 torch.cuda.empty_cache()
 

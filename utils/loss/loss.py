@@ -23,10 +23,11 @@ class Loss(nn.modules.loss._Loss):
 
         self.n_GPUs = len([int(id) for id in args.gpu_ids.split(',')])
         self.num_classes = args.num_classes
-        self.lovasz = LovaszSoftmax(ignore_index=255)
-        self.kldiv = KLDivergenceLoss(ignore_index=255)
+        # self.lovasz = LovaszSoftmax(ignore_index=255)
+        # self.kldiv = KLDivergenceLoss(ignore_index=255)
         self.loss = []
         self.loss_module = nn.ModuleList()
+        self.batch_count = 0
         for loss in args.loss_type.replace(" ", "").split('+'):
             if len(loss.split('*')) == 1:
                 weight = 1
@@ -140,6 +141,9 @@ class Loss(nn.modules.loss._Loss):
 
         return loss_sum
 
+    def batch_step(self, batch_size):
+        self.batch_count += batch_size
+
     def step(self):
         for l in self.get_loss_module():
             if hasattr(l, 'scheduler'):
@@ -148,14 +152,21 @@ class Loss(nn.modules.loss._Loss):
     def start_log(self):
         self.log = torch.cat((self.log, torch.zeros(1, len(self.loss))))
 
-    def end_log(self, n_batches):
-        self.log[-1].div_(n_batches)
+    def end_log(self, n_batches=None):
+        # self.log[-1].div_(n_batches)
+        self.log[-1].div_(self.batch_count)
+        self.batch_count = 0
 
-    def display_loss(self, batch):
-        n_samples = batch + 1
+    def display_loss(self, batch=None):
+        # n_samples = batch + 1
+        n_samples = self.batch_count
         log = []
         for l, c in zip(self.loss, self.log[-1]):
-            log.append('[{}: {:.4f}]'.format(l['type'], c / n_samples))
+            if l['type'] == 'Total':
+                weight=1
+            else:
+                weight=l['weight']
+            log.append('[{}: {:.4f}]'.format(l['type'], weight * c / n_samples))
 
         return ''.join(log)
 
