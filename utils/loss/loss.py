@@ -1,3 +1,4 @@
+import copy
 import os
 from importlib import import_module
 
@@ -10,10 +11,8 @@ import torch.nn as nn
 from utils import soft_argmax
 from utils.loss.edgeloss import EdgeLoss
 from utils.loss.focal import FocalLoss
-from utils.loss.kl_loss import KLDivergenceLoss
-from utils.loss.lovasz_softmax import LovaszSoftmax
-from utils.loss.scploss import SCPLoss, moving_average, to_one_hot
 from utils.loss.rmi import RMILoss
+from utils.loss.scploss import SCPLoss, moving_average, to_one_hot
 
 
 class Loss(nn.modules.loss._Loss):
@@ -120,7 +119,7 @@ class Loss(nn.modules.loss._Loss):
                 else:
                     if soft_preds is not None:
                         # loss1 = 0.5 * self.lovasz(pred, target)
-                        soft_pred = moving_average(soft_preds, to_one_hot(target, num_cls=self.num_classes),
+                        soft_pred = moving_average(soft_preds, to_one_hot(copy.deepcopy(target), num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
                         loss1 = 0.5 * l['function'](pred, target)

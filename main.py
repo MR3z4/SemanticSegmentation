@@ -247,7 +247,7 @@ def main(criterion):
 
             if (cur_itrs) % 10 == 0:
                 interval_loss = interval_loss / 10
-                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss:.4f}{criterion.display_loss().replace('][',', ')}")
+                print(f"\rEpoch {cur_epochs}, Itrs {cur_itrs}/{opts.total_itrs}, Loss={interval_loss:.4f} {criterion.display_loss().replace('][',', ')}")
                 interval_loss = 0.0
                 torch.cuda.empty_cache()
 

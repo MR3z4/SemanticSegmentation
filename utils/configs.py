@@ -49,7 +49,7 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='CE+0.1*EL',
+    parser.add_argument("--loss_type", type=str, default='RMI+0.2*EL',
                         choices=['MSE', 'CE', 'FL', 'F1', 'SCP'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list,
                         default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
