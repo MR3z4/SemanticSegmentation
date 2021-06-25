@@ -13,6 +13,7 @@ from utils.loss.edgeloss import EdgeLoss
 from utils.loss.focal import FocalLoss
 from utils.loss.rmi import RMILoss
 from utils.loss.scploss import SCPLoss, moving_average, to_one_hot
+from utils.loss.contrastce import ContrastCELoss
 
 
 class Loss(nn.modules.loss._Loss):
@@ -53,6 +54,11 @@ class Loss(nn.modules.loss._Loss):
                                         rmi_pool_size=2,
                                         rmi_pool_stride=2,
                                         loss_weight_lambda=0.5)
+            elif loss_type == 'CL':
+                loss_function = ContrastCELoss(num_classes=args.num_classes,
+                                               ce_weight=torch.Tensor(args.loss_weights),
+                                               ignore_index=255,
+                                               use_rmi=True)
             elif loss_type == 'SCP':
                 loss_function = SCPLoss(ignore_index=255, lambda_1=1, lambda_2=1, lambda_3=0.1, num_classes=20,
                                         weight=torch.Tensor(args.loss_weights))
@@ -106,9 +112,11 @@ class Loss(nn.modules.loss._Loss):
                 if l['type'] == 'SCP':
                     loss = l['function'](pred, [target, edges, soft_preds, soft_edges], cycle_n)
                 if l['type'] == 'EL':
+                    pred = pred['preds']
                     if soft_edges is not None:
                         loss1 = 0.5 * l['function'](pred, edges)
-                        soft_edge = moving_average(soft_edges, to_one_hot(copy.deepcopy(edges), num_cls=self.num_classes),
+                        soft_edge = moving_average(soft_edges,
+                                                   to_one_hot(copy.deepcopy(edges), num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_edge, edges)
                         # TODO: this part need to be checked.
@@ -116,10 +124,15 @@ class Loss(nn.modules.loss._Loss):
                         loss = loss1 + loss2
                     else:
                         loss = l['function'](pred, edges)
+                elif l['type'] == 'CL':
+                    loss = l['function'](pred, target)
                 else:
+                    pred = pred['preds']
                     if soft_preds is not None:
+                        soft_preds = soft_preds['preds']
                         # loss1 = 0.5 * self.lovasz(pred, target)
-                        soft_pred = moving_average(soft_preds, to_one_hot(copy.deepcopy(target), num_cls=self.num_classes),
+                        soft_pred = moving_average(soft_preds,
+                                                   to_one_hot(copy.deepcopy(target), num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
                         loss1 = 0.5 * l['function'](pred, target)
@@ -162,9 +175,9 @@ class Loss(nn.modules.loss._Loss):
         log = []
         for l, c in zip(self.loss, self.log[-1]):
             if l['type'] == 'Total':
-                weight=1
+                weight = 1
             else:
-                weight=l['weight']
+                weight = l['weight']
             log.append('[{}: {:.4f}]'.format(l['type'], weight * c / n_samples))
 
         return ''.join(log)

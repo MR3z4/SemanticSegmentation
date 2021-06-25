@@ -41,7 +41,8 @@ class RMILoss(nn.Module):
                  rmi_pool_size=3,  # The pool size of the pool operation before calculate RMI loss
                  rmi_pool_stride=3,  # The pool stride of the pool operation before calculate RMI loss
                  loss_weight_lambda=0.5,  # The realtive weight factor for the loss.
-                 lambda_way=1):
+                 lambda_way=1,
+                 ignore_index=255):
         super(RMILoss, self).__init__()
         self.num_classes = num_classes
         # radius choices
@@ -62,10 +63,10 @@ class RMILoss(nn.Module):
         self.d = 2 * self.half_d
         self.kernel_padding = self.rmi_pool_size // 2
         # ignore class
-        self.ignore_index = 255
+        self.ignore_index = ignore_index
 
-    def forward(self, logits_4D, labels_4D):
-        loss = self.forward_sigmoid(logits_4D, labels_4D)
+    def forward(self, logits_4D, labels_4D, do_rmi=True):
+        loss = self.forward_sigmoid(logits_4D, labels_4D, do_rmi=do_rmi)
         # loss = self.forward_softmax_sigmoid(logits_4D, labels_4D)
         return loss
 
@@ -104,7 +105,7 @@ class RMILoss(nn.Module):
 
         return final_loss
 
-    def forward_sigmoid(self, logits_4D, labels_4D):
+    def forward_sigmoid(self, logits_4D, labels_4D, do_rmi=True):
         """
         Using the sigmiod operation both.
         Args:
@@ -133,7 +134,8 @@ class RMILoss(nn.Module):
                                                          weight=label_mask_flat.unsqueeze(dim=1),
                                                          reduction='sum')
         bce_loss = torch.div(binary_loss, valid_pixels + 1.0)
-
+        if not do_rmi:
+            return bce_loss
         # PART II -- get rmi loss
         # onehot_labels_4D -- [N, C, H, W]
         probs_4D = logits_4D.sigmoid() * label_mask_3D.unsqueeze(dim=1) + _CLIP_MIN
