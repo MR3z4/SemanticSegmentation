@@ -143,6 +143,7 @@ def main(criterion):
     cycle_n = 0
 
     if opts.use_schp and opts.schp_ckpt is not None and os.path.isfile(opts.schp_ckpt):
+        # TODO: there is a problem with this part.
         checkpoint = torch.load(opts.schp_ckpt, map_location=torch.device('cpu'))
         schp_model.load_state_dict(checkpoint["model_state"])
         print("SCHP Model restored from %s" % opts.schp_ckpt)

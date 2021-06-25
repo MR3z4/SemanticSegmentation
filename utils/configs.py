@@ -19,10 +19,11 @@ def get_argparser():
                         help="num of void pixels at the border (default: 3)")
 
     # Model Options
-    parser.add_argument("--model", type=str, default='deeplabv3plusedgev2_resnet101v2',
+    parser.add_argument("--model", type=str, default='deeplabv3plus_resnet101v2',
                         choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
                                  'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
                                  'deeplabv3plus_resnet101v2', 'deeplabv3plusedgev1_resnet101v2',
+                                 'deeplabv3plusedgev2_resnet101v2', 'deeplabv3plus_vitb8',
                                  'deeplabv3_mobilenet', 'deeplabv3plus_mobilenet'], help='model name')
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")
@@ -49,7 +50,7 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='RMI+0.2*EL',
+    parser.add_argument("--loss_type", type=str, default='CL',
                         choices=['MSE', 'CE', 'FL', 'F1', 'SCP'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list,
                         default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
