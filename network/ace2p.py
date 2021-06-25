@@ -70,7 +70,9 @@ class ACE2P(nn.Module):
         x[0][0] = F.interpolate(x[0][0], size=input_shape, mode='bilinear', align_corners=False)
         x[0][1] = F.interpolate(x[0][1], size=input_shape, mode='bilinear', align_corners=False)
         x[1][0] = F.interpolate(x[1][0], size=input_shape, mode='bilinear', align_corners=False)
-        return x
+
+        out={'preds':x, 'features':features}
+        return out
 
 
 
