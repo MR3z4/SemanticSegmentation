@@ -38,7 +38,7 @@ def validate(opts, model, loader, device, metrics):
             labels = labels.to(device, dtype=torch.long)
 
             outputs = model(images)
-
+            outputs = outputs['preds']
             if 'ACE2P' in opts.model:
                 preds = outputs[0][0].detach().max(dim=1)[1].cpu().numpy()
             elif 'edgev1' in opts.model:
