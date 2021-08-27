@@ -230,6 +230,24 @@ class PascalPartValSegmentation(data.Dataset):
 
         return input, meta
 
+    def transform_logits(self, logits, center, scale, width, height, input_size):
+
+        trans = get_affine_transform(center, scale, 0, input_size, inv=1)
+        channel = logits.shape[2]
+        target_logits = []
+        for i in range(channel):
+            target_logit = cv2.warpAffine(
+                logits[:, :, i],
+                trans,
+                (int(width), int(height)),  # (int(width), int(height)),
+                flags=cv2.INTER_LINEAR,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=(0))
+            target_logits.append(target_logit)
+        target_logits = np.stack(target_logits, axis=2)
+
+        return target_logits
+
 
 if __name__ == '__main__':
     from tqdm import tqdm
