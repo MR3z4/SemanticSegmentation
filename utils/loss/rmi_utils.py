@@ -104,6 +104,8 @@ def log_det_by_cholesky(matrix):
 	"""
 	# This uses the property that the log det(A) = 2 * sum(log(real(diag(C))))
 	# where C is the cholesky decomposition of A.
+	if matrix.isnan().any():
+		return torch.zeros(matrix.shape[:2])*float('nan')
 	chol = torch.cholesky(matrix)
 	#return 2.0 * torch.sum(torch.log(torch.diagonal(chol, dim1=-2, dim2=-1) + 1e-6), dim=-1)
 	return 2.0 * torch.sum(torch.log(torch.diagonal(chol, dim1=-2, dim2=-1) + 1e-8), dim=-1)
