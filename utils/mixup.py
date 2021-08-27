@@ -23,6 +23,10 @@ def mixup_data(x, y, alpha=1.0, device='cuda', has_edge=False):
 
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam, edges=False, soft_preds=None, soft_edges=None, cycle_n=None):
+    if soft_preds is None:
+        soft_preds = None, None
+    if soft_edges is None:
+        soft_edges = None, None
     if edges:
         return lam * criterion(pred, y_a[0], edges=y_a[1], soft_preds=soft_preds[0], soft_edges=soft_edges[0],
                                cycle_n=cycle_n) + (1 - lam) * criterion(pred, y_b[0], edges=y_b[1],

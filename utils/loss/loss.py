@@ -112,22 +112,22 @@ class Loss(nn.modules.loss._Loss):
                 if l['type'] == 'SCP':
                     loss = l['function'](pred, [target, edges, soft_preds, soft_edges], cycle_n)
                 if l['type'] == 'EL':
-                    pred = pred['preds']
+                    pred_ = pred['preds']
                     if soft_edges is not None:
-                        loss1 = 0.5 * l['function'](pred, edges)
+                        loss1 = 0.5 * l['function'](pred_, edges)
                         soft_edge = moving_average(soft_edges,
                                                    to_one_hot(copy.deepcopy(edges), num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_edge, edges)
                         # TODO: this part need to be checked.
-                        loss2 = 0.5 * l['function'](pred, soft_edge)
+                        loss2 = 0.5 * l['function'](pred_, soft_edge)
                         loss = loss1 + loss2
                     else:
-                        loss = l['function'](pred, edges)
+                        loss = l['function'](pred_, edges)
                 elif l['type'] == 'CL':
                     loss = l['function'](pred, target)
                 else:
-                    pred = pred['preds']
+                    pred_ = pred['preds']
                     if soft_preds is not None:
                         soft_preds = soft_preds['preds']
                         # loss1 = 0.5 * self.lovasz(pred, target)
@@ -135,11 +135,11 @@ class Loss(nn.modules.loss._Loss):
                                                    to_one_hot(copy.deepcopy(target), num_cls=self.num_classes),
                                                    1.0 / (cycle_n + 1.0))
                         # loss2 = 0.5 * self.kldiv(pred, soft_pred, target)
-                        loss1 = 0.5 * l['function'](pred, target)
-                        loss2 = 0.5 * l['function'](pred, soft_argmax(soft_pred).round().long())
+                        loss1 = 0.5 * l['function'](pred_, target)
+                        loss2 = 0.5 * l['function'](pred_, soft_argmax(soft_pred).round().long())
                         loss = loss1 + loss2
                     else:
-                        loss = l['function'](pred, target)
+                        loss = l['function'](pred_, target)
                 effective_loss = l['weight'] * loss
                 losses.append(effective_loss)
                 self.log[-1, i] += effective_loss.item()
