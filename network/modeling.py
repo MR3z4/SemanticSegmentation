@@ -277,7 +277,7 @@ def ACE2P_resnet101(num_classes=21, output_stride=8, pretrained_backbone=True, u
         output_stride (int): output stride for deeplab.
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
-    return _load_model('ACE2P', 'resnet101', num_classes, output_stride=output_stride,
+    return _load_model('ACE2P', 'resnet101v2', num_classes, output_stride=output_stride,
                        pretrained_backbone=pretrained_backbone, use_abn=use_abn, ace2p=True)
 
 

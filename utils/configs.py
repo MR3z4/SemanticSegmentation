@@ -19,7 +19,7 @@ def get_argparser():
                         help="num of void pixels at the border (default: 3)")
 
     # Model Options
-    parser.add_argument("--model", type=str, default='deeplabv3plus_resnet101v2',
+    parser.add_argument("--model", type=str, default='deeplabv3plusedgev2_resnet101v2',
                         choices=['deeplabv3_resnet50', 'deeplabv3plus_resnet50', 'ACE2P_resnet50',
                                  'deeplabv3_resnet101', 'deeplabv3plus_resnet101', 'ACE2P_resnet101',
                                  'deeplabv3plus_resnet101v2', 'deeplabv3plusedgev1_resnet101v2',
@@ -50,7 +50,7 @@ def get_argparser():
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
 
-    parser.add_argument("--loss_type", type=str, default='CL',
+    parser.add_argument("--loss_type", type=str, default='RMI+0.2*EL',
                         choices=['MSE', 'CE', 'FL', 'F1', 'SCP'], help="loss type (default: False)")
     parser.add_argument("--loss_weights", type=list,
                         default=[0.03530634, 0.15666913, 0.15524384, 0.16220391, 0.16311258, 0.16293769, 0.16452651],
@@ -67,7 +67,7 @@ def get_argparser():
                         help="epoch interval for eval (default: 100)")
 
     # Optimizer Options
-    parser.add_argument('--optimizer', default='adabelief', type=str, help='Optimizer',
+    parser.add_argument('--optimizer', default='sgd', type=str, help='Optimizer',
                         choices=['sgd', 'adam', 'adamw', 'adabelief', 'yogi', 'msvag', 'radam', 'fromage', ])
     parser.add_argument("--lr", type=float, default=0.01,
                         help="learning rate (default: 0.01)")
@@ -93,7 +93,7 @@ def get_argparser():
                         help='the percent of the max iteration to be set for each stage in mwh. (it has 3 stages)')
 
     # SCHP Train Options
-    parser.add_argument("--use_schp", action='store_true', default=True,
+    parser.add_argument("--use_schp", action='store_true', default=False,
                         help='to either use SCHP or not')
     parser.add_argument("--schp_start", type=int, default=10,
                         help='SCHP start epoch')

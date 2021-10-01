@@ -8,7 +8,7 @@ from torchvision.transforms import transforms
 import torch
 import numpy as np
 import matplotlib
-# matplotlib.use('Agg')
+# matplotlib.use('Qt4Agg')
 
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -26,10 +26,10 @@ palette = [0,0,0,
 num_classes = 7
 output_stride = 16
 device = 'cuda'
-model_name = 'deeplabv3plus_resnet101v2'
-# model_name = 'ACE2P_resnet101'
-checkpoint_path = 'checkpoints/best_deeplabv3plusedgev2_resnet101v2_pascalpart_os16_sgd_rmi_el_6960_mixwh_ms.pth'
-# checkpoint_path = r"ace2p_initial_abn.pth"
+# model_name = 'deeplabv3plus_resnet101v2'
+model_name = 'ACE2P_resnet101'
+# checkpoint_path = 'checkpoints/best_deeplabv3plusedgev2_resnet101v2_pascalpart_os16_sgd_rmi_el_6960_mixwh_ms.pth'
+checkpoint_path = r"ace2p_initial_abn.pth"
 
 
 # img_path = 'samples/23_image.png'
@@ -40,8 +40,8 @@ model_map = network.model_map
 model = model_map[model_name](num_classes=num_classes, output_stride=output_stride, pretrained_backbone=True,
                               use_abn=False)
 chk = torch.load(checkpoint_path)
-# model.load_state_dict(chk['model_state'])
-model.load_state_dict(chk)
+model.load_state_dict(chk['model_state'])
+# model.load_state_dict(chk)
 
 model.to(device)
 model.eval()
@@ -54,7 +54,7 @@ val_transform = transforms.Compose([
 denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
                            std=[0.229, 0.224, 0.225])
 
-val_dst = PascalPartValSegmentation(root="thesistest", ext='.jpg', crop_size=[512, 512], ignore_label=255,
+val_dst = PascalPartValSegmentation(root=r"C:\Users\MohammadReza\Desktop\Thesis\Codes\Self-Correction-Human-Parsing-master\inputs", ext='.jpg', crop_size=[512, 512], ignore_label=255,
                                     transform=val_transform)
 val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False, num_workers=0)
 
