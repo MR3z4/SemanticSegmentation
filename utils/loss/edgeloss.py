@@ -15,13 +15,17 @@ class EdgeLoss(nn.Module):
         self.criterion = WeightedMSELoss()
         # self.criterion = nn.MSELoss()
         self.num_classes = num_classes
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, pred, target):
         pred_max = soft_argmax(pred)
         pred_max /= (pred_max + 1e-32)
+        sp = self.softmax(pred)
+        confidence = sp.max(1)[0]
         # preds_max = (preds_max > 0) * 1
         # preds_edge = generate_edge_tensor(preds_max)
         pred_edge = kornia.filters.sobel(pred_max.unsqueeze(1) * 1.7888, eps=1e-32).squeeze()
+        pred_edge *= confidence
         weight = target + 0.1
         loss = self.criterion(pred_edge, target, weight=weight)
         return loss
