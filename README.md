@@ -116,6 +116,8 @@ It will be completed over time.
 - [x] Add CE2P Network(with normal BatchNorm) for training.
 - [x] Add InPlace Active BatchNorm for CE2P.
 - [x] Add SCHP completely.
+- [x] Add Edge Loss
+- [x] Add Vision Transformers
 - [ ] Add MixMatch option for training
 - [ ] Add FixMatch option for training
 - [ ] Distibuted support
