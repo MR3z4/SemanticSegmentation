@@ -1,4 +1,4 @@
-[![Contributors][contributors-shield]][contributors-url]
+
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
@@ -43,6 +43,7 @@
         <li><a href="#built-using">Built Using</a></li>
       </ul>
     </li>
+    <li><a href="#results">Results</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -73,6 +74,19 @@ This project started as my master thesis. I will keep improving it as long as i 
 * PyTorch 1.2.0
 * torchvision 0.4.0
 
+<!-- Results -->
+## Results
+
+| Backbone		  |Head		    |Loss	  |mixup	|mixwh	|mIoU	  |Weights |
+|     :---:     |   :---:   | :---: | :---: | :---: | :---: | :---:  |
+| resnet101		  |ACE2P		  |scp	  |0		  |0		  |63.98	|[drive](https://drive.google.com/file/d/1rP15fYUdgQALs82_ZSVHTyqiaNuJW_vK/view?usp=sharing)|
+| resnet101		  |Deeplabv3+	|CE		  |0		  |0		  |62.86	|[drive](https://drive.google.com/file/d/16dZg9ArF8-qpgcojyPvJYv6NG00aqjDQ/view?usp=sharing)|
+| resnet101		  |Deeplabv3+	|CE		  |1		  |1		  |66.69	|[drive](https://drive.google.com/file/d/1M2raAsdcyHCwHpVWMOgHS7HGryZ_fWEH/view?usp=sharing)|
+| resnet101v2	  |Deeplabv3+	|CE		  |0		  |0		  |68.34	|[drive](https://drive.google.com/file/d/1KDmb1XwiOybyzZ1CfwoMMWfNjdblBEw9/view?usp=sharing)|
+| resnet101v2	  |Deeplabv3+	|RMI	  |0		  |0		  |69.34	|[drive](https://drive.google.com/file/d/1-0pU4aVAnXxNp6szMNJlx7ztdxhNUxgF/view?usp=sharing)|
+| resnet101v2	  |Deeplabv3+	|RMI	  |1		  |0		  |69.38	|[drive](https://drive.google.com/file/d/1EFgluqx07dPu9LS6xMgvam0nwy5mJLIe/view?usp=sharing)|
+| resnet101v2	  |Deeplabv3+	|RMI	  |1		  |1		  |69.53	|[drive](https://drive.google.com/file/d/1v77iNdwULSu1BweBElSGpWHpww97eXbC/view?usp=sharing)|
+| resnet101v2	  |Deeplabv3+	|RMI+EL	|1		  |1		  |69.6 	|[drive](https://drive.google.com/file/d/1V2PpUqiSGJTGLLY0uTWYFexs7g7ZnF7P/view?usp=sharing)|
 
 
 <!-- GETTING STARTED -->
